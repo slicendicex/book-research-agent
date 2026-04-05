@@ -31,3 +31,13 @@ class Document:
             "char_count": self.char_count,
             "metadata": asdict(self.metadata),
         }
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, object]) -> "Document":
+        metadata = DocumentMetadata(**payload["metadata"])
+        return cls(
+            id=str(payload["id"]),
+            title=str(payload["title"]),
+            text=str(payload["text"]),
+            metadata=metadata,
+        )

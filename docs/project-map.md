@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, AI boundary/config foundation, and a first reusable document ingestion layer in place.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, AI boundary/config foundation, document ingestion, and a first reusable chunking layer in place.
 
 ## Current structure
 
@@ -16,8 +16,11 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/`
 - `docs/layers/00-ai-boundary-config.md`
 - `docs/layers/01-document-ingestion.md`
+- `docs/layers/02-chunking-layer.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
+- `src/book_research_agent/core/chunks/`
+- `src/book_research_agent/core/chunking/`
 - `src/book_research_agent/core/config/`
 - `src/book_research_agent/core/documents/`
 - `src/book_research_agent/core/ingestion/`
@@ -41,16 +44,18 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Document models for normalized local source files
 - Ingestion pipeline for `.txt` and `.md` files from `data/raw/`
 - JSONL export to `data/processed/documents.jsonl`
+- Character-based chunking from `documents.jsonl` to `chunks.jsonl`
+- Chunk metadata that preserves document traceability
 - Minimal ingestion tests
+- Minimal chunking tests
 
 ## What is still missing
 
 - Core implementation
 - Domain-specific logic
-- Chunking
-- Embeddings and retrieval
+- Embedding and index integration
 - Real provider SDK integrations
 
 ## Next logical layer
 
-Reusable chunking layer built on top of ingested documents.
+Embedding and index integration built on top of chunks.
