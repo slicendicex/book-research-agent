@@ -8,9 +8,13 @@ class DummyEmbeddingProvider:
     provider_name: str
     model_name: str
 
-    def embed_text(self, text: str) -> list[float]:
+    def embed_text(self, text: str, *, input_type: str) -> list[float]:
         size_hint = float(len(text.strip()))
-        return [size_hint]
+        type_hint = 1.0 if input_type == "search_query" else 0.0
+        return [size_hint, type_hint]
+
+    def embed_texts(self, texts: list[str], *, input_type: str) -> list[list[float]]:
+        return [self.embed_text(text, input_type=input_type) for text in texts]
 
 
 @dataclass(frozen=True)

@@ -1,1 +1,1 @@
-# Third-party dependencies will be added in later layers as needed.
+cohere>=5.21,<6

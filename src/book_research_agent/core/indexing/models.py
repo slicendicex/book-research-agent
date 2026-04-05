@@ -2,42 +2,37 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-
-@dataclass(frozen=True)
-class ChunkMetadata:
-    document_relative_path: str
-    source_title: str
-    chunk_index: int
-    char_start: int
-    char_end: int
+from book_research_agent.core.chunks.models import ChunkMetadata
 
 
 @dataclass(frozen=True)
-class Chunk:
-    id: str
+class IndexedChunk:
+    chunk_id: str
     document_id: str
     text: str
     metadata: ChunkMetadata
-
-    @property
-    def char_count(self) -> int:
-        return len(self.text)
+    embedding: list[float]
+    embedding_model: str
 
     def to_dict(self) -> dict[str, object]:
         return {
-            "id": self.id,
+            "chunk_id": self.chunk_id,
             "document_id": self.document_id,
             "text": self.text,
-            "char_count": self.char_count,
             "metadata": asdict(self.metadata),
+            "embedding": self.embedding,
+            "embedding_model": self.embedding_model,
         }
 
     @classmethod
-    def from_dict(cls, payload: dict[str, object]) -> "Chunk":
+    def from_dict(cls, payload: dict[str, object]) -> "IndexedChunk":
         metadata = ChunkMetadata(**payload["metadata"])
+        embedding = [float(value) for value in payload["embedding"]]
         return cls(
-            id=str(payload["id"]),
+            chunk_id=str(payload["chunk_id"]),
             document_id=str(payload["document_id"]),
             text=str(payload["text"]),
             metadata=metadata,
+            embedding=embedding,
+            embedding_model=str(payload["embedding_model"]),
         )

@@ -5,6 +5,7 @@ from book_research_agent.core.providers.base import (
     EmbeddingProvider,
     GenerationProvider,
 )
+from book_research_agent.core.providers.cohere_embeddings import CohereEmbeddingProvider
 from book_research_agent.core.providers.dummy import (
     DummyEmbeddingProvider,
     DummyGenerationProvider,
@@ -23,6 +24,12 @@ def create_embedding_provider(settings: RuntimeSettings) -> EmbeddingProvider:
 
     if provider_name == "dummy":
         return DummyEmbeddingProvider(
+            provider_name=provider_name,
+            model_name=settings.embedding_model,
+        )
+
+    if provider_name == "cohere":
+        return CohereEmbeddingProvider(
             provider_name=provider_name,
             model_name=settings.embedding_model,
         )

@@ -27,6 +27,7 @@ class RuntimeSettings:
     embedding_model: str
     generation_provider: str
     generation_model: str
+    has_cohere_api_key: bool
     has_openai_api_key: bool
     has_gemini_api_key: bool
     has_anthropic_api_key: bool
@@ -52,11 +53,11 @@ def load_settings() -> RuntimeSettings:
         environment=_read_env("BOOK_RESEARCH_AGENT_ENV", "local"),
         embedding_provider=_read_env(
             "BOOK_RESEARCH_AGENT_EMBEDDING_PROVIDER",
-            "dummy",
+            "cohere",
         ),
         embedding_model=_read_env(
             "BOOK_RESEARCH_AGENT_EMBEDDING_MODEL",
-            "dummy-embedding-v1",
+            "embed-v4.0",
         ),
         generation_provider=_read_env(
             "BOOK_RESEARCH_AGENT_GENERATION_PROVIDER",
@@ -66,6 +67,7 @@ def load_settings() -> RuntimeSettings:
             "BOOK_RESEARCH_AGENT_GENERATION_MODEL",
             "dummy-generation-v1",
         ),
+        has_cohere_api_key=_has_env_value("COHERE_API_KEY"),
         has_openai_api_key=_has_env_value("OPENAI_API_KEY"),
         has_gemini_api_key=_has_env_value("GEMINI_API_KEY"),
         has_anthropic_api_key=_has_env_value("ANTHROPIC_API_KEY"),

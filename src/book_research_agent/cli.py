@@ -2,13 +2,17 @@ import argparse
 from pathlib import Path
 
 from book_research_agent.core.chunking import chunk_documents, write_chunks_jsonl
+from book_research_agent.core.chunking.serialize import read_chunks_jsonl
 from book_research_agent.core.config.settings import load_settings
 from book_research_agent.core.ingestion import ingest_documents, write_documents_jsonl
 from book_research_agent.core.ingestion.serialize import read_documents_jsonl
+from book_research_agent.core.indexing import build_chunk_index, read_indexed_chunks_jsonl
+from book_research_agent.core.indexing.serialize import write_indexed_chunks_jsonl
 from book_research_agent.core.providers.factory import (
     create_embedding_provider,
     create_generation_provider,
 )
+from book_research_agent.core.retrieval import search_index
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -71,12 +75,54 @@ def build_parser() -> argparse.ArgumentParser:
     )
     chunk_parser.set_defaults(handler=run_chunk)
 
+    index_parser = subparsers.add_parser(
+        "index",
+        help="Embed chunks and write a local file-based chunk index.",
+    )
+    index_parser.add_argument(
+        "--input-file",
+        type=Path,
+        default=None,
+        help="Input chunks JSONL path. Defaults to data/processed/chunks.jsonl.",
+    )
+    index_parser.add_argument(
+        "--output-file",
+        type=Path,
+        default=None,
+        help="Output index JSONL path. Defaults to data/index/chunk_index.jsonl.",
+    )
+    index_parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=32,
+        help="Number of chunk texts to embed per batch.",
+    )
+    index_parser.set_defaults(handler=run_index)
+
+    search_parser = subparsers.add_parser(
+        "search",
+        help="Search the local chunk index with cosine similarity.",
+    )
+    search_parser.add_argument("query", help="Search query text.")
+    search_parser.add_argument(
+        "--index-file",
+        type=Path,
+        default=None,
+        help="Input index JSONL path. Defaults to data/index/chunk_index.jsonl.",
+    )
+    search_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=5,
+        help="Maximum number of matches to return.",
+    )
+    search_parser.set_defaults(handler=run_search)
+
     return parser
 
 
 def run_doctor(_args: argparse.Namespace) -> int:
     settings = load_settings()
-    embedding_provider = create_embedding_provider(settings)
     generation_provider = create_generation_provider(settings)
 
     print("book-research-agent doctor")
@@ -87,11 +133,15 @@ def run_doctor(_args: argparse.Namespace) -> int:
     print(f"data_index_dir: {settings.data_index_dir}")
     print(
         "embedding_provider: "
-        f"{embedding_provider.provider_name} ({embedding_provider.model_name})"
+        f"{settings.embedding_provider} ({settings.embedding_model})"
     )
     print(
         "generation_provider: "
         f"{generation_provider.provider_name} ({generation_provider.model_name})"
+    )
+    print(
+        "cohere_api_key_present: "
+        f"{'yes' if settings.has_cohere_api_key else 'no'}"
     )
     print(
         "openai_api_key_present: "
@@ -144,6 +194,62 @@ def run_chunk(args: argparse.Namespace) -> int:
     print(f"chunk_size: {args.chunk_size}")
     print(f"chunk_overlap: {args.chunk_overlap}")
     print(f"output_path: {output_file}")
+    return 0
+
+
+def run_index(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    input_file = args.input_file or (settings.data_processed_dir / "chunks.jsonl")
+    output_file = args.output_file or (settings.data_index_dir / "chunk_index.jsonl")
+
+    chunks = read_chunks_jsonl(input_file)
+    embedding_provider = create_embedding_provider(settings)
+    indexed_chunks = build_chunk_index(
+        chunks,
+        embedding_provider=embedding_provider,
+        embedding_model=settings.embedding_model,
+        batch_size=args.batch_size,
+    )
+    write_indexed_chunks_jsonl(indexed_chunks, output_file)
+
+    print("book-research-agent index")
+    print(f"input_chunks: {len(chunks)}")
+    print(f"indexed_chunks: {len(indexed_chunks)}")
+    print(f"embedding_provider: {embedding_provider.provider_name}")
+    print(f"embedding_model: {settings.embedding_model}")
+    print(f"output_path: {output_file}")
+    return 0
+
+
+def run_search(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+
+    indexed_chunks = read_indexed_chunks_jsonl(index_file)
+    embedding_provider = create_embedding_provider(settings)
+    results = search_index(
+        query=args.query,
+        indexed_chunks=indexed_chunks,
+        embedding_provider=embedding_provider,
+        top_k=args.top_k,
+    )
+
+    print("book-research-agent search")
+    print(f"query: {args.query}")
+    print(f"top_k: {args.top_k}")
+    print(f"index_path: {index_file}")
+    print(f"matches: {len(results)}")
+
+    for result in results:
+        excerpt = result.indexed_chunk.text.replace("\n", " ").strip()
+        excerpt = excerpt[:160]
+        print("---")
+        print(f"score: {result.score:.4f}")
+        print(f"title: {result.indexed_chunk.metadata.source_title}")
+        print(f"path: {result.indexed_chunk.metadata.document_relative_path}")
+        print(f"chunk_index: {result.indexed_chunk.metadata.chunk_index}")
+        print(f"excerpt: {excerpt}")
+
     return 0
 
 
