@@ -12,7 +12,7 @@ from book_research_agent.core.providers.factory import (
     create_embedding_provider,
     create_generation_provider,
 )
-from book_research_agent.core.retrieval import search_index
+from book_research_agent.core.retrieval import build_source_results, search_index
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -117,6 +117,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum number of matches to return.",
     )
     search_parser.set_defaults(handler=run_search)
+
+    source_parser = subparsers.add_parser(
+        "source",
+        help="Search the local chunk index in a more source-facing display mode.",
+    )
+    source_parser.add_argument("query", help="Search query text.")
+    source_parser.add_argument(
+        "--index-file",
+        type=Path,
+        default=None,
+        help="Input index JSONL path. Defaults to data/index/chunk_index.jsonl.",
+    )
+    source_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=5,
+        help="Maximum number of source-facing matches to return.",
+    )
+    source_parser.add_argument(
+        "--excerpt-length",
+        type=int,
+        default=160,
+        help="Maximum display length for formatted excerpts.",
+    )
+    source_parser.set_defaults(handler=run_source)
 
     return parser
 
@@ -249,6 +274,42 @@ def run_search(args: argparse.Namespace) -> int:
         print(f"path: {result.indexed_chunk.metadata.document_relative_path}")
         print(f"chunk_index: {result.indexed_chunk.metadata.chunk_index}")
         print(f"excerpt: {excerpt}")
+
+    return 0
+
+
+def run_source(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+
+    indexed_chunks = read_indexed_chunks_jsonl(index_file)
+    embedding_provider = create_embedding_provider(settings)
+    candidate_count = max(args.top_k * 3, args.top_k)
+    search_results = search_index(
+        query=args.query,
+        indexed_chunks=indexed_chunks,
+        embedding_provider=embedding_provider,
+        top_k=candidate_count,
+    )
+    source_results = build_source_results(
+        search_results,
+        max_results=args.top_k,
+        excerpt_length=args.excerpt_length,
+    )
+
+    print("book-research-agent source")
+    print(f"query: {args.query}")
+    print(f"top_k: {args.top_k}")
+    print(f"index_path: {index_file}")
+    print(f"matches: {len(source_results)}")
+
+    for result in source_results:
+        print("---")
+        print(f"score: {result.score:.4f}")
+        print(f"title: {result.title}")
+        print(f"path: {result.relative_path}")
+        print(f"chunk_index: {result.chunk_index}")
+        print(f"excerpt: {result.excerpt}")
 
     return 0
 

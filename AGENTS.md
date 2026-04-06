@@ -1,97 +1,173 @@
-# AGENTS.md — book-research-agent
+# AGENTS.md
 
-## Purpose
+## Project mission
 
-This repository starts with a book-research use case, but it must be built as a reusable research-agent scaffold first.
+`book-research-agent` is a CLI-first external brain for a private book corpus.
 
-Do not tightly fuse the architecture to one specific book from day one.
+The project is not a generic chatbot and not a UI app.
+Its purpose is to ingest a private corpus, transform it into retrieval-ready layers, and later support source-grounded answering.
 
-## Build order
+Core direction:
+- source-first
+- corpus-grounded
+- layer-by-layer
+- reusable scaffold first
+- domain logic later
+- private corpus stays outside git
 
-Always build in this order:
+---
 
-1. Reusable scaffold
-2. Domain-specific layer
-3. Real corpus data
+## Architecture principles
 
-Do not merge these concerns into one step.
+1. Build layer by layer.
+2. Keep scope narrow for each task.
+3. Prefer working minimal slices over broad speculative design.
+4. Keep `core`, `domain`, and `corpus` separated.
+5. Retrieval quality comes before generation polish.
+6. Keep the app CLI-first until a later phase.
+7. Use file-based intermediate artifacts unless a stronger storage layer is clearly justified.
+8. Do not put secrets in source code or git-tracked files.
+9. Do not commit private raw, processed, or index artifacts.
 
-## v0.1 boundary
+---
 
-For the first version, keep the project:
+## Current product shape
 
-- Python
-- local `venv`
-- one provider at a time
-- local files as the main corpus
-- retrieval-first
-- CLI-first
+Current pipeline:
 
-Do not introduce unless explicitly requested:
+raw files
+-> ingest
+-> documents.jsonl
+-> chunk
+-> chunks.jsonl
+-> embed
+-> chunk_index.jsonl
+-> search
+
+Generation is not implemented yet.
+Source retrieval quality and traceability come first.
+
+---
+
+## Scope constraints
+
+Unless the active layer document explicitly requires it, do NOT add:
 
 - LangGraph
-- multi-agent orchestration
+- UI / web app
+- Telegram integration
 - OCR
-- Telegram bot
-- web UI
-- browser app
-- background jobs
-- heavy framework abstractions
-- premature cloud infrastructure
+- PDF parsing
+- DOCX parsing
+- vector database
+- reranking model
+- multi-agent orchestration
+- MCP
+- function calling
+- generation / synthesis
+- domain-specific reasoning
+- broad speculative frameworks
 
-## Architecture rule
+Also avoid:
+- unrelated refactors
+- rewriting stable working layers without strong reason
+- changing file layout more than necessary
+- adding dependencies unless clearly justified
 
-Keep three layers conceptually separate:
+---
 
-- `core/` — reusable engine logic
-- `domain/` — replaceable project/domain logic
-- `corpus/` — concrete loaded materials
+## Coding style
 
-Main rule:
-- Core should be reusable
-- Domain should be replaceable
-- Corpus should be attachable separately
+1. Keep code small and explicit.
+2. Prefer stdlib unless an external dependency is clearly necessary.
+3. Prefer dataclasses, plain functions, and readable control flow.
+4. Avoid premature abstraction.
+5. Keep models narrow and purpose-specific.
+6. Keep serialization explicit.
+7. Keep CLI thin; business logic should live in core modules.
+8. Keep tests narrow and deterministic.
+9. Never print or persist secrets.
+10. Preserve traceability from retrieval outputs back to source documents.
 
-## Layer rule
+---
 
-Work strictly one layer at a time.
+## Data and security rules
 
-For each layer:
+Never commit:
+- `data/raw/*`
+- `data/processed/*`
+- `data/index/*`
+- `.env`
+- API keys
+- private corpus text outside safe test fixtures
 
-1. Define the goal
-2. Define a short definition of done
-3. List the files that should change
-4. Implement only that layer
-5. Run a minimal verification
-6. Explain what changed
-7. Update `docs/project-map.md`
+Allowed tracked placeholders:
+- `data/raw/.gitkeep`
+- `data/processed/.gitkeep`
+- `data/index/.gitkeep`
 
-Do not silently expand scope.
+Secrets policy:
+- Secrets live only in `.env` or environment variables.
+- Secrets must never be hardcoded.
+- Secrets must never be written to logs or tracked files.
+- Secret presence may be reported as yes/no, but values must not be shown.
 
-## Change discipline
+---
 
-Prefer the smallest coherent change.
+## Workflow rules
 
-Do:
-- keep code simple
-- keep names explicit
-- keep files focused
-- preserve readability
-- isolate responsibilities
+For every new layer:
 
-Do not:
-- rewrite unrelated files
-- add abstractions for hypothetical future needs
-- add dependencies without a clear reason
-- mix scaffold design and real corpus ingestion in one step
+1. Read `AGENTS.md`.
+2. Read `CURRENT_STATE.md`.
+3. Read the active layer document in `docs/layers/`.
+4. Implement only the current layer.
+5. Keep changes narrow and directly relevant.
+6. Run the verification commands from the active layer document.
+7. Update:
+   - `docs/project-map.md`
+   - `CURRENT_STATE.md`
+8. Keep `CURRENT_STATE.md` concise and structured.
+   Do not turn it into a running diary or verbose changelog.
+   Update only the relevant fixed sections.
+9. Return:
+   - changed files
+   - short architecture summary
+   - verification commands
+   - verification results
+   - remaining notes or risks
+   - suggested commit message
 
-## Verification and docs
+Do not claim a layer is complete unless its Definition of Done is satisfied.
 
-After each completed layer:
+---
 
-- run the smallest relevant check
-- note limitations honestly
-- do a brief self-review for overengineering or scope drift
-- update `docs/project-map.md`
+## Testing rules
 
-If architecture-specific guidance grows, keep this file short and move details into project docs.
+- Add or update tests only for the current layer.
+- Prefer simple deterministic tests.
+- Avoid real network calls in unit tests.
+- Mock or stub external providers where needed.
+- Manual smoke tests are acceptable for live provider integration, but must be clearly labeled.
+
+---
+
+## Git discipline
+
+- Work in small accepted layers.
+- Commit only after a layer passes review.
+- Keep commit messages narrow and meaningful.
+- Do not commit noisy temporary files.
+- Do not commit private corpus artifacts.
+
+---
+
+## Good layer outcome
+
+A good layer:
+- is narrow
+- is understandable
+- preserves architecture clarity
+- preserves traceability
+- avoids smuggling in future complexity
+- moves the project one real step forward

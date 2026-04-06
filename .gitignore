@@ -10,3 +10,9 @@ data/processed/*
 
 data/index/*
 !data/index/.gitkeep
+.omx/
+.codex/
+tmux-server-*.log
+tmux-server-*.log
+tmux-server-*.log
+tmux-server-*.log
