@@ -6,7 +6,7 @@ Project: `book-research-agent`
 Version line: `v0.1 foundation`  
 Direction: CLI-first external brain for a private book corpus
 
-The project is being built as a layered semantic retrieval system before generation is added.
+The project is being built as a layered retrieval-first system with minimal grounded generation now in place.
 
 ---
 
@@ -19,7 +19,7 @@ raw files
 -> chunks.jsonl
 -> embed
 -> chunk_index.jsonl
--> search
+-> search / source / answer
 
 Current retrieval stack is functional:
 - local private corpus
@@ -39,6 +39,7 @@ Current retrieval stack is functional:
 - Layer 02 — Chunking Layer
 - Layer 03 — Embedding Integration + Local Index Foundation
 - Layer 04 — Source Retrieval Mode
+- Layer 05 — Generation / Answer Assembly Foundation
 
 ---
 
@@ -51,6 +52,7 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli chunk
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli index
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli search "auditor"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli source "auditor"
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli answer "What does the auditor represent?"
 PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
 ```
 
@@ -80,14 +82,14 @@ Embeddings:
 - model: `embed-v4.0`
 
 Generation:
-- not implemented yet
+- provider: `cohere`
+- answer mode: retrieval-grounded single-shot generation
 
 ---
 
 ## Known limitations
 
 - chunking is character-based
-- no generation / synthesis layer yet
 - no domain-specific reasoning layer yet
 - no MCP / function-calling layer yet
 
@@ -95,16 +97,15 @@ Generation:
 
 ## Next target layer
 
-Layer 05 — Generation Layer
+Layer 06 — Later expansion
 
 Goal:
-add a minimal source-grounded generation layer on top of retrieval without weakening traceability.
+keep later work beyond the new minimal answer layer narrow and traceable.
 
 Focus:
-- source-grounded answer scaffold
-- retrieval-to-generation handoff
-- explicit citation-first output shape
-- no domain-specific reasoning yet
+- future provider expansion
+- deeper reasoning layers
+- still no domain-specific reasoning yet
 
 ---
 

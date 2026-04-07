@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, and a source-facing retrieval display mode in place.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, and a minimal retrieval-grounded answer mode.
 
 ## Current structure
 
@@ -27,6 +27,8 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `src/book_research_agent/core/documents/`
 - `src/book_research_agent/core/ingestion/`
 - `src/book_research_agent/core/indexing/`
+- `src/book_research_agent/core/generation/`
+- `src/book_research_agent/core/answering/`
 - `src/book_research_agent/core/providers/`
 - `src/book_research_agent/core/retrieval/`
 - `src/book_research_agent/core/retrieval/source.py`
@@ -59,14 +61,15 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Source-facing retrieval formatting with readable excerpts
 - Light same-document neighbor suppression for source-mode output
 - Dedicated `source` CLI command for source-first retrieval display
+- Cohere as the first real generation provider
+- Retrieval-grounded answer assembly with visible source references
+- Dedicated `answer` CLI command for short grounded answers
 
 ## What is still missing
 
-- Core implementation
-- Domain-specific logic
-- Generation integration
-- Real provider SDK integrations
+- Domain-specific reasoning
+- Additional provider choices beyond the current Cohere-first path
 
 ## Next logical layer
 
-Generation integration built on top of the retrieval foundation.
+Broader reasoning and provider expansion built on top of the retrieval-grounded answer layer.

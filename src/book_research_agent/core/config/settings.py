@@ -61,11 +61,11 @@ def load_settings() -> RuntimeSettings:
         ),
         generation_provider=_read_env(
             "BOOK_RESEARCH_AGENT_GENERATION_PROVIDER",
-            "dummy",
+            "cohere",
         ),
         generation_model=_read_env(
             "BOOK_RESEARCH_AGENT_GENERATION_MODEL",
-            "dummy-generation-v1",
+            "command-a-03-2025",
         ),
         has_cohere_api_key=_has_env_value("COHERE_API_KEY"),
         has_openai_api_key=_has_env_value("OPENAI_API_KEY"),

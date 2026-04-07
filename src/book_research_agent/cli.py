@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 
+from book_research_agent.core.answering import answer_query
 from book_research_agent.core.chunking import chunk_documents, write_chunks_jsonl
 from book_research_agent.core.chunking.serialize import read_chunks_jsonl
 from book_research_agent.core.config.settings import load_settings
@@ -143,12 +144,30 @@ def build_parser() -> argparse.ArgumentParser:
     )
     source_parser.set_defaults(handler=run_source)
 
+    answer_parser = subparsers.add_parser(
+        "answer",
+        help="Answer a question using retrieval-first grounded generation.",
+    )
+    answer_parser.add_argument("query", help="Question to answer.")
+    answer_parser.add_argument(
+        "--index-file",
+        type=Path,
+        default=None,
+        help="Input index JSONL path. Defaults to data/index/chunk_index.jsonl.",
+    )
+    answer_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=3,
+        help="Maximum number of grounded source references to use.",
+    )
+    answer_parser.set_defaults(handler=run_answer)
+
     return parser
 
 
 def run_doctor(_args: argparse.Namespace) -> int:
     settings = load_settings()
-    generation_provider = create_generation_provider(settings)
 
     print("book-research-agent doctor")
     print(f"environment: {settings.environment}")
@@ -162,7 +181,7 @@ def run_doctor(_args: argparse.Namespace) -> int:
     )
     print(
         "generation_provider: "
-        f"{generation_provider.provider_name} ({generation_provider.model_name})"
+        f"{settings.generation_provider} ({settings.generation_model})"
     )
     print(
         "cohere_api_key_present: "
@@ -310,6 +329,38 @@ def run_source(args: argparse.Namespace) -> int:
         print(f"path: {result.relative_path}")
         print(f"chunk_index: {result.chunk_index}")
         print(f"excerpt: {result.excerpt}")
+
+    return 0
+
+
+def run_answer(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+
+    indexed_chunks = read_indexed_chunks_jsonl(index_file)
+    embedding_provider = create_embedding_provider(settings)
+    generation_provider = create_generation_provider(settings)
+    result = answer_query(
+        query=args.query,
+        indexed_chunks=indexed_chunks,
+        embedding_provider=embedding_provider,
+        generation_provider=generation_provider,
+        top_k=args.top_k,
+    )
+
+    print("book-research-agent answer")
+    print(f"query: {result.query}")
+    print(f"top_k: {args.top_k}")
+    print(f"index_path: {index_file}")
+    print("answer:")
+    print(result.answer)
+    print("sources_used:")
+
+    for source in result.sources_used:
+        print("---")
+        print(f"title: {source.title}")
+        print(f"path: {source.relative_path}")
+        print(f"chunk_index: {source.chunk_index}")
 
     return 0
 

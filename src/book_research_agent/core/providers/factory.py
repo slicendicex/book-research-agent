@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from book_research_agent.core.config.settings import RuntimeSettings
+from book_research_agent.core.generation import CohereGenerationProvider
 from book_research_agent.core.providers.base import (
     EmbeddingProvider,
     GenerationProvider,
@@ -10,6 +11,8 @@ from book_research_agent.core.providers.dummy import (
     DummyEmbeddingProvider,
     DummyGenerationProvider,
 )
+
+DEFAULT_COHERE_GENERATION_MODEL = "command-a-03-2025"
 
 
 def _not_implemented_provider(provider_name: str, provider_kind: str) -> NotImplementedError:
@@ -51,9 +54,21 @@ def create_generation_provider(settings: RuntimeSettings) -> GenerationProvider:
             model_name=settings.generation_model,
         )
 
+    if provider_name == "cohere":
+        return CohereGenerationProvider(
+            provider_name=provider_name,
+            model_name=_resolve_cohere_generation_model(settings),
+        )
+
     if provider_name in {"openai", "gemini", "anthropic"}:
         raise _not_implemented_provider(provider_name, "generation")
 
     raise NotImplementedError(
         f"Unsupported generation provider '{settings.generation_provider}'."
     )
+
+
+def _resolve_cohere_generation_model(settings: RuntimeSettings) -> str:
+    if settings.generation_model == "dummy-generation-v1":
+        return DEFAULT_COHERE_GENERATION_MODEL
+    return settings.generation_model
