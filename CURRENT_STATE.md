@@ -29,6 +29,7 @@ Current retrieval stack is functional:
 - file-based local semantic index
 - top-k semantic search
 - source-facing retrieval display mode
+- read-only corpus diagnostics commands
 
 ---
 
@@ -40,6 +41,7 @@ Current retrieval stack is functional:
 - Layer 03 — Embedding Integration + Local Index Foundation
 - Layer 04 — Source Retrieval Mode
 - Layer 05 — Generation / Answer Assembly Foundation
+- Layer 06 — Corpus Diagnostics
 
 ---
 
@@ -53,6 +55,10 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli index
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli search "auditor"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli source "auditor"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli answer "What does the auditor represent?"
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli stats
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-doc --path "notes/example.md"
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-chunk --chunk-id "doc-1:0"
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-index --chunk-id "doc-1:0"
 PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
 ```
 
@@ -97,10 +103,10 @@ Generation:
 
 ## Next target layer
 
-Layer 06 — Later expansion
+Layer 07 — Later expansion
 
 Goal:
-keep later work beyond the new minimal answer layer narrow and traceable.
+keep later work beyond retrieval-grounded answering and diagnostics narrow and traceable.
 
 Focus:
 - future provider expansion

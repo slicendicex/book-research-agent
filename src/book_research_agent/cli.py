@@ -1,10 +1,18 @@
 import argparse
+import sys
 from pathlib import Path
 
 from book_research_agent.core.answering import answer_query
 from book_research_agent.core.chunking import chunk_documents, write_chunks_jsonl
 from book_research_agent.core.chunking.serialize import read_chunks_jsonl
 from book_research_agent.core.config.settings import load_settings
+from book_research_agent.core.diagnostics import (
+    DiagnosticLookupError,
+    get_chunk_by_id,
+    get_corpus_stats,
+    get_document_by_path,
+    get_indexed_chunk_by_id,
+)
 from book_research_agent.core.ingestion import ingest_documents, write_documents_jsonl
 from book_research_agent.core.ingestion.serialize import read_documents_jsonl
 from book_research_agent.core.indexing import build_chunk_index, read_indexed_chunks_jsonl
@@ -14,6 +22,7 @@ from book_research_agent.core.providers.factory import (
     create_generation_provider,
 )
 from book_research_agent.core.retrieval import build_source_results, search_index
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -162,6 +171,81 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum number of grounded source references to use.",
     )
     answer_parser.set_defaults(handler=run_answer)
+
+    stats_parser = subparsers.add_parser(
+        "stats",
+        help="Inspect basic corpus artifact counts.",
+    )
+    stats_parser.add_argument(
+        "--documents-file",
+        type=Path,
+        default=None,
+        help="Input documents JSONL path. Defaults to data/processed/documents.jsonl.",
+    )
+    stats_parser.add_argument(
+        "--chunks-file",
+        type=Path,
+        default=None,
+        help="Input chunks JSONL path. Defaults to data/processed/chunks.jsonl.",
+    )
+    stats_parser.add_argument(
+        "--index-file",
+        type=Path,
+        default=None,
+        help="Input index JSONL path. Defaults to data/index/chunk_index.jsonl.",
+    )
+    stats_parser.set_defaults(handler=run_stats)
+
+    inspect_doc_parser = subparsers.add_parser(
+        "inspect-doc",
+        help="Inspect a processed document by relative path.",
+    )
+    inspect_doc_parser.add_argument(
+        "--path",
+        required=True,
+        help="Document relative path inside documents.jsonl.",
+    )
+    inspect_doc_parser.add_argument(
+        "--documents-file",
+        type=Path,
+        default=None,
+        help="Input documents JSONL path. Defaults to data/processed/documents.jsonl.",
+    )
+    inspect_doc_parser.set_defaults(handler=run_inspect_doc)
+
+    inspect_chunk_parser = subparsers.add_parser(
+        "inspect-chunk",
+        help="Inspect a chunk by chunk id.",
+    )
+    inspect_chunk_parser.add_argument(
+        "--chunk-id",
+        required=True,
+        help="Chunk id to inspect.",
+    )
+    inspect_chunk_parser.add_argument(
+        "--chunks-file",
+        type=Path,
+        default=None,
+        help="Input chunks JSONL path. Defaults to data/processed/chunks.jsonl.",
+    )
+    inspect_chunk_parser.set_defaults(handler=run_inspect_chunk)
+
+    inspect_index_parser = subparsers.add_parser(
+        "inspect-index",
+        help="Inspect an indexed chunk by chunk id.",
+    )
+    inspect_index_parser.add_argument(
+        "--chunk-id",
+        required=True,
+        help="Indexed chunk id to inspect.",
+    )
+    inspect_index_parser.add_argument(
+        "--index-file",
+        type=Path,
+        default=None,
+        help="Input index JSONL path. Defaults to data/index/chunk_index.jsonl.",
+    )
+    inspect_index_parser.set_defaults(handler=run_inspect_index)
 
     return parser
 
@@ -363,6 +447,106 @@ def run_answer(args: argparse.Namespace) -> int:
         print(f"chunk_index: {source.chunk_index}")
 
     return 0
+
+
+def run_stats(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    documents_file = (
+        args.documents_file or (settings.data_processed_dir / "documents.jsonl")
+    )
+    chunks_file = args.chunks_file or (settings.data_processed_dir / "chunks.jsonl")
+    index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+
+    try:
+        stats = get_corpus_stats(documents_file, chunks_file, index_file)
+    except (DiagnosticLookupError, FileNotFoundError) as error:
+        return _print_diagnostic_error(error)
+
+    print("book-research-agent stats")
+    print(f"documents_path: {stats.documents_path}")
+    print(f"documents: {stats.document_count}")
+    print(f"chunks_path: {stats.chunks_path}")
+    print(f"chunks: {stats.chunk_count}")
+    print(f"index_path: {stats.index_path}")
+    print(f"indexed_chunks: {stats.indexed_chunk_count}")
+    return 0
+
+
+def run_inspect_doc(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    documents_file = (
+        args.documents_file or (settings.data_processed_dir / "documents.jsonl")
+    )
+
+    try:
+        document = get_document_by_path(documents_file, args.path)
+    except (DiagnosticLookupError, FileNotFoundError) as error:
+        return _print_diagnostic_error(error)
+
+    print("book-research-agent inspect-doc")
+    print(f"documents_path: {documents_file}")
+    print(f"id: {document.id}")
+    print(f"title: {document.title}")
+    print(f"path: {document.metadata.relative_path}")
+    print(f"source_kind: {document.metadata.source_kind}")
+    print(f"source_path: {document.metadata.source_path}")
+    print(f"file_extension: {document.metadata.file_extension}")
+    print(f"content_sha1: {document.metadata.content_sha1}")
+    print(f"char_count: {document.char_count}")
+    print("text:")
+    print(document.text)
+    return 0
+
+
+def run_inspect_chunk(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    chunks_file = args.chunks_file or (settings.data_processed_dir / "chunks.jsonl")
+
+    try:
+        chunk = get_chunk_by_id(chunks_file, args.chunk_id)
+    except (DiagnosticLookupError, FileNotFoundError) as error:
+        return _print_diagnostic_error(error)
+
+    print("book-research-agent inspect-chunk")
+    print(f"chunks_path: {chunks_file}")
+    print(f"chunk_id: {chunk.id}")
+    print(f"document_id: {chunk.document_id}")
+    print(f"title: {chunk.metadata.source_title}")
+    print(f"path: {chunk.metadata.document_relative_path}")
+    print(f"chunk_index: {chunk.metadata.chunk_index}")
+    print(f"char_start: {chunk.metadata.char_start}")
+    print(f"char_end: {chunk.metadata.char_end}")
+    print("text:")
+    print(chunk.text)
+    return 0
+
+
+def run_inspect_index(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+
+    try:
+        indexed_chunk = get_indexed_chunk_by_id(index_file, args.chunk_id)
+    except (DiagnosticLookupError, FileNotFoundError) as error:
+        return _print_diagnostic_error(error)
+
+    print("book-research-agent inspect-index")
+    print(f"index_path: {index_file}")
+    print(f"chunk_id: {indexed_chunk.chunk_id}")
+    print(f"document_id: {indexed_chunk.document_id}")
+    print(f"embedding_model: {indexed_chunk.embedding_model}")
+    print(f"embedding_dimension: {len(indexed_chunk.embedding)}")
+    print(f"title: {indexed_chunk.metadata.source_title}")
+    print(f"path: {indexed_chunk.metadata.document_relative_path}")
+    print(f"chunk_index: {indexed_chunk.metadata.chunk_index}")
+    print(f"char_start: {indexed_chunk.metadata.char_start}")
+    print(f"char_end: {indexed_chunk.metadata.char_end}")
+    return 0
+
+
+def _print_diagnostic_error(error: Exception) -> int:
+    print(str(error), file=sys.stderr)
+    return 1
 
 
 def main() -> int:

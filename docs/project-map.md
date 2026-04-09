@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, and a minimal retrieval-grounded answer mode.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, and read-only corpus diagnostics.
 
 ## Current structure
 
@@ -19,11 +19,14 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/02-chunking-layer.md`
 - `docs/layers/03-embedding-index-foundation.md`
 - `docs/layers/04-source-retrieval-mode.md`
+- `docs/layers/05-generation-answer-assembly.md`
+- `docs/layers/06-corpus-diagnostics.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
 - `src/book_research_agent/core/chunking/`
 - `src/book_research_agent/core/config/`
+- `src/book_research_agent/core/diagnostics/`
 - `src/book_research_agent/core/documents/`
 - `src/book_research_agent/core/ingestion/`
 - `src/book_research_agent/core/indexing/`
@@ -64,6 +67,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Cohere as the first real generation provider
 - Retrieval-grounded answer assembly with visible source references
 - Dedicated `answer` CLI command for short grounded answers
+- Read-only corpus diagnostics commands: `stats`, `inspect-doc`, `inspect-chunk`, `inspect-index`
 
 ## What is still missing
 
@@ -72,4 +76,4 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 
 ## Next logical layer
 
-Broader reasoning and provider expansion built on top of the retrieval-grounded answer layer.
+Broader reasoning and provider expansion built on top of the current retrieval-grounded answer and diagnostics foundation.
