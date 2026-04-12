@@ -165,6 +165,54 @@ def build_grounded_contradiction_prompt(
     return "\n".join(prompt_parts)
 
 
+def build_grounded_canon_prompt(
+    *,
+    query: str,
+    search_results: list[SearchResult],
+    domain_pack: DomainPack | None = None,
+) -> str:
+    normalized_query = query.strip()
+    if not normalized_query:
+        raise ValueError("query must not be empty")
+    if not search_results:
+        raise ValueError("search_results must not be empty")
+
+    source_blocks = [
+        _format_source_block(result, index=index)
+        for index, result in enumerate(search_results, start=1)
+    ]
+    prompt_parts = [
+        "You produce a short canon-oriented judgment using only the provided sources.",
+        "Treat retrieved sources as the primary evidence.",
+        "Prefer 'unclear' over overclaiming canon when support is limited.",
+        "Identify competing variants only if the sources support them.",
+        "Keep the response short and structured.",
+        "Use this shape: current_canonical_reading: <one concise sentence>",
+        "Then add: competing_variants: <concise note or unclear>",
+        "Then add: confidence: <high|medium|low|unclear> with a short reason",
+        "Do not invent facts, citations, or unsupported canon.",
+    ]
+
+    if domain_pack is not None:
+        prompt_parts.extend(
+            [
+                "",
+                format_domain_guidance(domain_pack),
+            ]
+        )
+
+    prompt_parts.extend(
+        [
+            "",
+            f"Canon query: {normalized_query}",
+            "",
+            "Sources:",
+            *source_blocks,
+        ]
+    )
+    return "\n".join(prompt_parts)
+
+
 def _format_source_block(result: SearchResult, *, index: int) -> str:
     metadata = result.indexed_chunk.metadata
     normalized_text = " ".join(result.indexed_chunk.text.split()).strip()

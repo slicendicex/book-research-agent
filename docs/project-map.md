@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, and read-only duplicate detection.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, and a narrow canon judgment mode.
 
 ## Current structure
 
@@ -25,6 +25,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/08-compare-mode-foundation.md`
 - `docs/layers/09-contradiction-tension-foundation.md`
 - `docs/layers/10-corpus-hygiene-duplicate-detection.md`
+- `docs/layers/11-canon-mode-foundation.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
@@ -40,6 +41,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `src/book_research_agent/core/answering/`
 - `src/book_research_agent/core/answering/compare.py`
 - `src/book_research_agent/core/answering/contradiction.py`
+- `src/book_research_agent/core/answering/canon.py`
 - `src/book_research_agent/core/providers/`
 - `src/book_research_agent/core/retrieval/`
 - `src/book_research_agent/core/retrieval/source.py`
@@ -82,6 +84,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Dedicated `compare` CLI command for short grounded comparisons with visible sources for both sides
 - Dedicated `contradict` CLI command for cautious grounded contradiction/tension judgments
 - Read-only duplicate detection commands: `dedup-stats`, `find-duplicates`, `find-duplicate-chunks`
+- Dedicated `canon` CLI command for short cautious canon-oriented judgments with visible sources
 
 ## What is still missing
 
@@ -90,4 +93,4 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 
 ## Next logical layer
 
-Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, diagnostics, and corpus hygiene foundation.
+Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, and corpus hygiene foundation.

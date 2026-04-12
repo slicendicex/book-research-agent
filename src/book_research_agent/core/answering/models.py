@@ -33,3 +33,10 @@ class ContradictionResult:
     judgment: str
     left_sources_used: list[SourceReference]
     right_sources_used: list[SourceReference]
+
+
+@dataclass(frozen=True)
+class CanonResult:
+    query: str
+    judgment: str
+    sources_used: list[SourceReference]

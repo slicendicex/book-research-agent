@@ -19,7 +19,7 @@ raw files
 -> chunks.jsonl
 -> embed
 -> chunk_index.jsonl
--> search / source / answer / compare / contradict
+-> search / source / answer / compare / contradict / canon
 
 Current retrieval stack is functional:
 - local private corpus
@@ -32,6 +32,7 @@ Current retrieval stack is functional:
 - canon-aware answer prompt lens
 - grounded compare mode
 - grounded contradiction/tension mode
+- grounded canon judgment mode
 - CLI autoloads project-root `.env`
 - read-only corpus diagnostics commands
 - read-only duplicate detection commands
@@ -51,6 +52,7 @@ Current retrieval stack is functional:
 - Layer 08 — Compare Mode Foundation
 - Layer 09 — Contradiction / Tension Foundation
 - Layer 10 — Corpus Hygiene / Duplicate Detection
+- Layer 11 — Canon Mode Foundation
 
 ---
 
@@ -66,6 +68,7 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli source "auditor"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli answer "What does the auditor represent?"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli compare "auditor" "old man"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli contradict "auditor as protector" "auditor as destroyer"
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli canon "auditor language"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli stats
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli dedup-stats
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli find-duplicates
@@ -119,10 +122,10 @@ Generation:
 
 ## Next target layer
 
-Layer 11 — Later expansion
+Layer 12 — Later expansion
 
 Goal:
-keep later work beyond canon-aware retrieval-grounded answering, compare/contradiction modes, diagnostics, and corpus hygiene narrow and traceable.
+keep later work beyond canon-aware retrieval-grounded answering, compare/contradiction/canon modes, diagnostics, and corpus hygiene narrow and traceable.
 
 Focus:
 - future provider expansion
