@@ -24,3 +24,12 @@ class CompareResult:
     comparison: str
     left_sources_used: list[SourceReference]
     right_sources_used: list[SourceReference]
+
+
+@dataclass(frozen=True)
+class ContradictionResult:
+    left_query: str
+    right_query: str
+    judgment: str
+    left_sources_used: list[SourceReference]
+    right_sources_used: list[SourceReference]
