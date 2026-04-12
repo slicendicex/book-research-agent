@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, and grounded compare mode.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, and grounded compare mode.
 
 ## Current structure
 
@@ -28,6 +28,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `src/book_research_agent/core/chunks/`
 - `src/book_research_agent/core/chunking/`
 - `src/book_research_agent/core/config/`
+- `src/book_research_agent/core/config/env.py`
 - `src/book_research_agent/core/diagnostics/`
 - `src/book_research_agent/core/documents/`
 - `src/book_research_agent/core/ingestion/`
@@ -53,6 +54,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Local `.venv/` Python environment
 - Minimal runnable CLI scaffold and basic path configuration
 - Runtime settings loaded from environment variables
+- CLI startup automatically loads project-root `.env` without overriding shell variables
 - Reusable provider interfaces with dummy implementations and a local factory
 - `doctor` CLI command for safe configuration inspection
 - Document models for normalized local source files

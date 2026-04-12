@@ -31,6 +31,7 @@ Current retrieval stack is functional:
 - source-facing retrieval display mode
 - canon-aware answer prompt lens
 - grounded compare mode
+- CLI autoloads project-root `.env`
 - read-only corpus diagnostics commands
 
 ---
@@ -66,6 +67,8 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-chunk --chunk
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-index --chunk-id "doc-1:0"
 PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
 ```
+
+CLI commands load project-root `.env` automatically; manual `source .env` is not required for normal use.
 
 ---
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from book_research_agent.core.answering import answer_query, compare_queries
 from book_research_agent.core.chunking import chunk_documents, write_chunks_jsonl
 from book_research_agent.core.chunking.serialize import read_chunks_jsonl
+from book_research_agent.core.config.env import load_project_env
 from book_research_agent.core.config.settings import load_settings
 from book_research_agent.core.diagnostics import (
     DiagnosticLookupError,
@@ -612,6 +613,7 @@ def _print_diagnostic_error(error: Exception) -> int:
 
 
 def main() -> int:
+    load_project_env()
     parser = build_parser()
     args = parser.parse_args()
 
