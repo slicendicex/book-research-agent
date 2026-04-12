@@ -34,6 +34,7 @@ Current retrieval stack is functional:
 - grounded contradiction/tension mode
 - CLI autoloads project-root `.env`
 - read-only corpus diagnostics commands
+- read-only duplicate detection commands
 
 ---
 
@@ -49,6 +50,7 @@ Current retrieval stack is functional:
 - Layer 07 — Domain Pack / Canon Foundation
 - Layer 08 — Compare Mode Foundation
 - Layer 09 — Contradiction / Tension Foundation
+- Layer 10 — Corpus Hygiene / Duplicate Detection
 
 ---
 
@@ -65,6 +67,9 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli answer "What does the
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli compare "auditor" "old man"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli contradict "auditor as protector" "auditor as destroyer"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli stats
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli dedup-stats
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli find-duplicates
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli find-duplicate-chunks
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-doc --path "notes/example.md"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-chunk --chunk-id "doc-1:0"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-index --chunk-id "doc-1:0"
@@ -114,10 +119,10 @@ Generation:
 
 ## Next target layer
 
-Layer 10 — Later expansion
+Layer 11 — Later expansion
 
 Goal:
-keep later work beyond canon-aware retrieval-grounded answering, compare/contradiction modes, and diagnostics narrow and traceable.
+keep later work beyond canon-aware retrieval-grounded answering, compare/contradiction modes, diagnostics, and corpus hygiene narrow and traceable.
 
 Focus:
 - future provider expansion

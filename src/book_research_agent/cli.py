@@ -18,6 +18,12 @@ from book_research_agent.core.diagnostics import (
     get_document_by_path,
     get_indexed_chunk_by_id,
 )
+from book_research_agent.core.hygiene import (
+    DuplicateGroup,
+    find_duplicate_chunks,
+    find_duplicate_documents,
+    get_dedup_stats,
+)
 from book_research_agent.core.ingestion import ingest_documents, write_documents_jsonl
 from book_research_agent.core.ingestion.serialize import read_documents_jsonl
 from book_research_agent.core.indexing import build_chunk_index, read_indexed_chunks_jsonl
@@ -240,6 +246,48 @@ def build_parser() -> argparse.ArgumentParser:
         help="Input index JSONL path. Defaults to data/index/chunk_index.jsonl.",
     )
     stats_parser.set_defaults(handler=run_stats)
+
+    dedup_stats_parser = subparsers.add_parser(
+        "dedup-stats",
+        help="Inspect likely duplicate document and chunk group counts.",
+    )
+    dedup_stats_parser.add_argument(
+        "--documents-file",
+        type=Path,
+        default=None,
+        help="Input documents JSONL path. Defaults to data/processed/documents.jsonl.",
+    )
+    dedup_stats_parser.add_argument(
+        "--chunks-file",
+        type=Path,
+        default=None,
+        help="Input chunks JSONL path. Defaults to data/processed/chunks.jsonl.",
+    )
+    dedup_stats_parser.set_defaults(handler=run_dedup_stats)
+
+    find_duplicates_parser = subparsers.add_parser(
+        "find-duplicates",
+        help="Find likely duplicate or near-duplicate processed documents.",
+    )
+    find_duplicates_parser.add_argument(
+        "--documents-file",
+        type=Path,
+        default=None,
+        help="Input documents JSONL path. Defaults to data/processed/documents.jsonl.",
+    )
+    find_duplicates_parser.set_defaults(handler=run_find_duplicates)
+
+    find_duplicate_chunks_parser = subparsers.add_parser(
+        "find-duplicate-chunks",
+        help="Find likely duplicate or near-duplicate processed chunks.",
+    )
+    find_duplicate_chunks_parser.add_argument(
+        "--chunks-file",
+        type=Path,
+        default=None,
+        help="Input chunks JSONL path. Defaults to data/processed/chunks.jsonl.",
+    )
+    find_duplicate_chunks_parser.set_defaults(handler=run_find_duplicate_chunks)
 
     inspect_doc_parser = subparsers.add_parser(
         "inspect-doc",
@@ -601,6 +649,60 @@ def run_stats(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_dedup_stats(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    documents_file = (
+        args.documents_file or (settings.data_processed_dir / "documents.jsonl")
+    )
+    chunks_file = args.chunks_file or (settings.data_processed_dir / "chunks.jsonl")
+
+    try:
+        stats = get_dedup_stats(documents_file, chunks_file)
+    except FileNotFoundError as error:
+        return _print_diagnostic_error(error)
+
+    print("book-research-agent dedup-stats")
+    print(f"documents_path: {documents_file}")
+    print(f"documents: {stats.document_count}")
+    print(f"chunks_path: {chunks_file}")
+    print(f"chunks: {stats.chunk_count}")
+    print(f"duplicate_document_groups: {stats.duplicate_document_group_count}")
+    print(f"duplicate_chunk_groups: {stats.duplicate_chunk_group_count}")
+    return 0
+
+
+def run_find_duplicates(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    documents_file = (
+        args.documents_file or (settings.data_processed_dir / "documents.jsonl")
+    )
+
+    try:
+        groups = find_duplicate_documents(documents_file)
+    except FileNotFoundError as error:
+        return _print_diagnostic_error(error)
+
+    print("book-research-agent find-duplicates")
+    print(f"documents_path: {documents_file}")
+    _print_duplicate_groups(groups, item_kind="document")
+    return 0
+
+
+def run_find_duplicate_chunks(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    chunks_file = args.chunks_file or (settings.data_processed_dir / "chunks.jsonl")
+
+    try:
+        groups = find_duplicate_chunks(chunks_file)
+    except FileNotFoundError as error:
+        return _print_diagnostic_error(error)
+
+    print("book-research-agent find-duplicate-chunks")
+    print(f"chunks_path: {chunks_file}")
+    _print_duplicate_groups(groups, item_kind="chunk")
+    return 0
+
+
 def run_inspect_doc(args: argparse.Namespace) -> int:
     settings = load_settings()
     documents_file = (
@@ -676,6 +778,23 @@ def run_inspect_index(args: argparse.Namespace) -> int:
 def _print_diagnostic_error(error: Exception) -> int:
     print(str(error), file=sys.stderr)
     return 1
+
+
+def _print_duplicate_groups(groups: list[DuplicateGroup], *, item_kind: str) -> None:
+    print(f"groups: {len(groups)}")
+
+    for group_index, group in enumerate(groups, start=1):
+        print("---")
+        print(f"group: {group_index}")
+        print(f"similarity: {group.similarity:.2f}")
+
+        for item in group.items:
+            print(f"{item_kind}_id: {item.item_id}")
+            print(f"document_id: {item.document_id}")
+            print(f"title: {item.title}")
+            print(f"path: {item.relative_path}")
+            if item.chunk_index is not None:
+                print(f"chunk_index: {item.chunk_index}")
 
 
 def main() -> int:
