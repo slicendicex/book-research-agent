@@ -238,7 +238,7 @@ def build_parser() -> argparse.ArgumentParser:
     canon_parser.add_argument(
         "--top-k",
         type=int,
-        default=3,
+        default=8,
         help="Maximum number of grounded source references to use.",
     )
     canon_parser.set_defaults(handler=run_canon)
