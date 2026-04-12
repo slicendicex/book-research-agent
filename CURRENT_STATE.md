@@ -29,6 +29,7 @@ Current retrieval stack is functional:
 - file-based local semantic index
 - top-k semantic search
 - source-facing retrieval display mode
+- canon-aware answer prompt lens
 - read-only corpus diagnostics commands
 
 ---
@@ -42,6 +43,7 @@ Current retrieval stack is functional:
 - Layer 04 — Source Retrieval Mode
 - Layer 05 — Generation / Answer Assembly Foundation
 - Layer 06 — Corpus Diagnostics
+- Layer 07 — Domain Pack / Canon Foundation
 
 ---
 
@@ -96,22 +98,22 @@ Generation:
 ## Known limitations
 
 - chunking is character-based
-- no domain-specific reasoning layer yet
+- domain awareness is currently a compact prompt lens, not a reasoning layer
 - no MCP / function-calling layer yet
 
 ---
 
 ## Next target layer
 
-Layer 07 — Later expansion
+Layer 08 — Later expansion
 
 Goal:
-keep later work beyond retrieval-grounded answering and diagnostics narrow and traceable.
+keep later work beyond canon-aware retrieval-grounded answering and diagnostics narrow and traceable.
 
 Focus:
 - future provider expansion
 - deeper reasoning layers
-- still no domain-specific reasoning yet
+- no broad domain-specific reasoning engine yet
 
 ---
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from book_research_agent.domain import DomainPack, format_domain_guidance
 from book_research_agent.core.retrieval import SearchResult
 
 
@@ -7,6 +8,7 @@ def build_grounded_answer_prompt(
     *,
     query: str,
     search_results: list[SearchResult],
+    domain_pack: DomainPack | None = None,
 ) -> str:
     normalized_query = query.strip()
     if not normalized_query:
@@ -18,12 +20,23 @@ def build_grounded_answer_prompt(
         _format_source_block(result, index=index)
         for index, result in enumerate(search_results, start=1)
     ]
-    return "\n".join(
+    prompt_parts = [
+        "You answer questions using only the provided sources.",
+        "Keep the answer short, direct, and grounded in the sources.",
+        "If the sources do not contain the answer, say so plainly.",
+        "Do not invent facts, citations, or canon.",
+    ]
+
+    if domain_pack is not None:
+        prompt_parts.extend(
+            [
+                "",
+                format_domain_guidance(domain_pack),
+            ]
+        )
+
+    prompt_parts.extend(
         [
-            "You answer questions using only the provided sources.",
-            "Keep the answer short, direct, and grounded in the sources.",
-            "If the sources do not contain the answer, say so plainly.",
-            "Do not invent facts or citations.",
             "",
             f"Question: {normalized_query}",
             "",
@@ -31,6 +44,7 @@ def build_grounded_answer_prompt(
             *source_blocks,
         ]
     )
+    return "\n".join(prompt_parts)
 
 
 def _format_source_block(result: SearchResult, *, index: int) -> str:

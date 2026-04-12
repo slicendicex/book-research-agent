@@ -6,6 +6,7 @@ from book_research_agent.core.answering import build_grounded_answer_prompt
 from book_research_agent.core.chunks.models import ChunkMetadata
 from book_research_agent.core.indexing.models import IndexedChunk
 from book_research_agent.core.retrieval import SearchResult
+from book_research_agent.domain import DEFAULT_DOMAIN_PACK
 
 
 def make_search_result(
@@ -59,6 +60,30 @@ class AnswerPromptingTests(unittest.TestCase):
             "content: The auditor represents oversight and accountability.",
             prompt,
         )
+
+    def test_prompt_can_include_compact_domain_guidance(self) -> None:
+        prompt = build_grounded_answer_prompt(
+            query="What does the old man protect?",
+            search_results=[
+                make_search_result(
+                    chunk_id="doc-1:0",
+                    title="Canon Notes",
+                    relative_path="notes/canon.md",
+                    text="The old man is associated with preservation.",
+                    chunk_index=0,
+                )
+            ],
+            domain_pack=DEFAULT_DOMAIN_PACK,
+        )
+
+        self.assertIn("using only the provided sources", prompt)
+        self.assertIn("Do not invent facts, citations, or canon.", prompt)
+        self.assertIn("Domain guidance:", prompt)
+        self.assertIn("book-project-canon", prompt)
+        self.assertIn("Auditor", prompt)
+        self.assertIn("Old Man", prompt)
+        self.assertIn("canon", prompt)
+        self.assertIn("Question: What does the old man protect?", prompt)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ from book_research_agent.core.answering.prompting import build_grounded_answer_p
 from book_research_agent.core.indexing.models import IndexedChunk
 from book_research_agent.core.providers.base import EmbeddingProvider, GenerationProvider
 from book_research_agent.core.retrieval import filter_neighboring_results, search_index
+from book_research_agent.domain import DEFAULT_DOMAIN_PACK
 
 
 def answer_query(
@@ -37,6 +38,7 @@ def answer_query(
     prompt = build_grounded_answer_prompt(
         query=query,
         search_results=search_results,
+        domain_pack=DEFAULT_DOMAIN_PACK,
     )
     answer = generation_provider.generate_text(prompt).strip()
     if not answer:
