@@ -19,7 +19,7 @@ raw files
 -> chunks.jsonl
 -> embed
 -> chunk_index.jsonl
--> search / source / answer
+-> search / source / answer / compare
 
 Current retrieval stack is functional:
 - local private corpus
@@ -30,6 +30,7 @@ Current retrieval stack is functional:
 - top-k semantic search
 - source-facing retrieval display mode
 - canon-aware answer prompt lens
+- grounded compare mode
 - read-only corpus diagnostics commands
 
 ---
@@ -44,6 +45,7 @@ Current retrieval stack is functional:
 - Layer 05 — Generation / Answer Assembly Foundation
 - Layer 06 — Corpus Diagnostics
 - Layer 07 — Domain Pack / Canon Foundation
+- Layer 08 — Compare Mode Foundation
 
 ---
 
@@ -57,6 +59,7 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli index
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli search "auditor"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli source "auditor"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli answer "What does the auditor represent?"
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli compare "auditor" "old man"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli stats
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-doc --path "notes/example.md"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli inspect-chunk --chunk-id "doc-1:0"
@@ -105,10 +108,10 @@ Generation:
 
 ## Next target layer
 
-Layer 08 — Later expansion
+Layer 09 — Later expansion
 
 Goal:
-keep later work beyond canon-aware retrieval-grounded answering and diagnostics narrow and traceable.
+keep later work beyond canon-aware retrieval-grounded answering, compare mode, and diagnostics narrow and traceable.
 
 Focus:
 - future provider expansion

@@ -2,7 +2,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from book_research_agent.core.answering import answer_query
+from book_research_agent.core.answering import answer_query, compare_queries
 from book_research_agent.core.chunking import chunk_documents, write_chunks_jsonl
 from book_research_agent.core.chunking.serialize import read_chunks_jsonl
 from book_research_agent.core.config.settings import load_settings
@@ -171,6 +171,26 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum number of grounded source references to use.",
     )
     answer_parser.set_defaults(handler=run_answer)
+
+    compare_parser = subparsers.add_parser(
+        "compare",
+        help="Compare two queries using retrieval-first grounded generation.",
+    )
+    compare_parser.add_argument("left_query", help="First query to compare.")
+    compare_parser.add_argument("right_query", help="Second query to compare.")
+    compare_parser.add_argument(
+        "--index-file",
+        type=Path,
+        default=None,
+        help="Input index JSONL path. Defaults to data/index/chunk_index.jsonl.",
+    )
+    compare_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=3,
+        help="Maximum number of source references to use per side.",
+    )
+    compare_parser.set_defaults(handler=run_compare)
 
     stats_parser = subparsers.add_parser(
         "stats",
@@ -441,6 +461,48 @@ def run_answer(args: argparse.Namespace) -> int:
     print("sources_used:")
 
     for source in result.sources_used:
+        print("---")
+        print(f"title: {source.title}")
+        print(f"path: {source.relative_path}")
+        print(f"chunk_index: {source.chunk_index}")
+
+    return 0
+
+
+def run_compare(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+
+    indexed_chunks = read_indexed_chunks_jsonl(index_file)
+    embedding_provider = create_embedding_provider(settings)
+    generation_provider = create_generation_provider(settings)
+    result = compare_queries(
+        left_query=args.left_query,
+        right_query=args.right_query,
+        indexed_chunks=indexed_chunks,
+        embedding_provider=embedding_provider,
+        generation_provider=generation_provider,
+        top_k=args.top_k,
+    )
+
+    print("book-research-agent compare")
+    print(f"left_query: {result.left_query}")
+    print(f"right_query: {result.right_query}")
+    print(f"top_k: {args.top_k}")
+    print(f"index_path: {index_file}")
+    print("comparison:")
+    print(result.comparison)
+    print("left_sources_used:")
+
+    for source in result.left_sources_used:
+        print("---")
+        print(f"title: {source.title}")
+        print(f"path: {source.relative_path}")
+        print(f"chunk_index: {source.chunk_index}")
+
+    print("right_sources_used:")
+
+    for source in result.right_sources_used:
         print("---")
         print(f"title: {source.title}")
         print(f"path: {source.relative_path}")

@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, and compact canon-aware answer guidance.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, and grounded compare mode.
 
 ## Current structure
 
@@ -22,6 +22,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/05-generation-answer-assembly.md`
 - `docs/layers/06-corpus-diagnostics.md`
 - `docs/layers/07-domain-pack-canon-foundation.md`
+- `docs/layers/08-compare-mode-foundation.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
@@ -33,6 +34,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `src/book_research_agent/core/indexing/`
 - `src/book_research_agent/core/generation/`
 - `src/book_research_agent/core/answering/`
+- `src/book_research_agent/core/answering/compare.py`
 - `src/book_research_agent/core/providers/`
 - `src/book_research_agent/core/retrieval/`
 - `src/book_research_agent/core/retrieval/source.py`
@@ -71,6 +73,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Dedicated `answer` CLI command for short grounded answers
 - Read-only corpus diagnostics commands: `stats`, `inspect-doc`, `inspect-chunk`, `inspect-index`
 - Compact domain pack for canon-aware answer wording without overriding retrieved sources
+- Dedicated `compare` CLI command for short grounded comparisons with visible sources for both sides
 
 ## What is still missing
 
@@ -79,4 +82,4 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 
 ## Next logical layer
 
-Broader reasoning and provider expansion built on top of the canon-aware answer and diagnostics foundation.
+Broader reasoning and provider expansion built on top of the canon-aware answer, compare, and diagnostics foundation.
