@@ -14,7 +14,7 @@ from book_research_agent.core.answering import (
 )
 from book_research_agent.core.chunking import chunk_documents, write_chunks_jsonl
 from book_research_agent.core.chunking.serialize import read_chunks_jsonl
-from book_research_agent.core.config.env import load_project_env
+from book_research_agent.core.config.env import get_env_var_status, load_project_env
 from book_research_agent.core.config.settings import load_settings
 from book_research_agent.core.diagnostics import (
     DiagnosticLookupError,
@@ -384,23 +384,20 @@ def run_doctor(_args: argparse.Namespace) -> int:
         "generation_provider: "
         f"{settings.generation_provider} ({settings.generation_model})"
     )
-    print(
-        "cohere_api_key_present: "
-        f"{'yes' if settings.has_cohere_api_key else 'no'}"
-    )
-    print(
-        "openai_api_key_present: "
-        f"{'yes' if settings.has_openai_api_key else 'no'}"
-    )
+    _print_env_var_status("cohere_api_key", "COHERE_API_KEY")
+    _print_env_var_status("openai_api_key", "OPENAI_API_KEY")
     print(
         "gemini_api_key_present: "
         f"{'yes' if settings.has_gemini_api_key else 'no'}"
     )
-    print(
-        "anthropic_api_key_present: "
-        f"{'yes' if settings.has_anthropic_api_key else 'no'}"
-    )
+    _print_env_var_status("anthropic_api_key", "ANTHROPIC_API_KEY")
     return 0
+
+
+def _print_env_var_status(label: str, env_var_name: str) -> None:
+    status = get_env_var_status(env_var_name)
+    print(f"{label}_present: {'yes' if status.present else 'no'}")
+    print(f"{label}_source: {status.source}")
 
 
 def run_ingest(args: argparse.Namespace) -> int:
