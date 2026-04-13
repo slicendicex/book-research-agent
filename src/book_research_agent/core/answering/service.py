@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from book_research_agent.core.answering.defaults import DEFAULT_ANSWER_TOP_K
 from book_research_agent.core.answering.models import AnswerResult, SourceReference
 from book_research_agent.core.answering.prompting import build_grounded_answer_prompt
 from book_research_agent.core.indexing.models import IndexedChunk
@@ -14,7 +15,7 @@ def answer_query(
     indexed_chunks: list[IndexedChunk],
     embedding_provider: EmbeddingProvider,
     generation_provider: GenerationProvider,
-    top_k: int = 3,
+    top_k: int = DEFAULT_ANSWER_TOP_K,
 ) -> AnswerResult:
     if top_k <= 0:
         raise ValueError("top_k must be greater than zero")

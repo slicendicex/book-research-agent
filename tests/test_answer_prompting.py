@@ -53,6 +53,9 @@ class AnswerPromptingTests(unittest.TestCase):
 
         self.assertIn("Question: What does the auditor represent?", prompt)
         self.assertIn("using only the provided sources", prompt)
+        self.assertIn("Prefer specific source-backed details", prompt)
+        self.assertIn("support: <specific source-backed detail>", prompt)
+        self.assertIn("limits: <uncertainty or missing evidence, or none>", prompt)
         self.assertIn("title: Auditor Notes", prompt)
         self.assertIn("path: notes/auditor.md", prompt)
         self.assertIn("chunk_index: 0", prompt)

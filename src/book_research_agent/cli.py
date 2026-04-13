@@ -3,6 +3,10 @@ import sys
 from pathlib import Path
 
 from book_research_agent.core.answering import (
+    DEFAULT_ANSWER_TOP_K,
+    DEFAULT_CANON_TOP_K,
+    DEFAULT_COMPARE_TOP_K,
+    DEFAULT_CONTRADICT_TOP_K,
     answer_query,
     canon_query,
     compare_queries,
@@ -179,7 +183,7 @@ def build_parser() -> argparse.ArgumentParser:
     answer_parser.add_argument(
         "--top-k",
         type=int,
-        default=3,
+        default=DEFAULT_ANSWER_TOP_K,
         help="Maximum number of grounded source references to use.",
     )
     answer_parser.set_defaults(handler=run_answer)
@@ -199,7 +203,7 @@ def build_parser() -> argparse.ArgumentParser:
     compare_parser.add_argument(
         "--top-k",
         type=int,
-        default=3,
+        default=DEFAULT_COMPARE_TOP_K,
         help="Maximum number of source references to use per side.",
     )
     compare_parser.set_defaults(handler=run_compare)
@@ -219,7 +223,7 @@ def build_parser() -> argparse.ArgumentParser:
     contradict_parser.add_argument(
         "--top-k",
         type=int,
-        default=3,
+        default=DEFAULT_CONTRADICT_TOP_K,
         help="Maximum number of source references to use per side.",
     )
     contradict_parser.set_defaults(handler=run_contradict)
@@ -238,7 +242,7 @@ def build_parser() -> argparse.ArgumentParser:
     canon_parser.add_argument(
         "--top-k",
         type=int,
-        default=8,
+        default=DEFAULT_CANON_TOP_K,
         help="Maximum number of grounded source references to use.",
     )
     canon_parser.set_defaults(handler=run_canon)

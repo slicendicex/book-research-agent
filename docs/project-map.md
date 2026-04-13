@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, and a narrow canon judgment mode.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, and improved grounding prompts with mode-aware retrieval depth defaults.
 
 ## Current structure
 
@@ -26,6 +26,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/09-contradiction-tension-foundation.md`
 - `docs/layers/10-corpus-hygiene-duplicate-detection.md`
 - `docs/layers/11-canon-mode-foundation.md`
+- `docs/layers/12-answer-quality-grounding-improvements.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
@@ -39,6 +40,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `src/book_research_agent/core/generation/`
 - `src/book_research_agent/core/hygiene/`
 - `src/book_research_agent/core/answering/`
+- `src/book_research_agent/core/answering/defaults.py`
 - `src/book_research_agent/core/answering/compare.py`
 - `src/book_research_agent/core/answering/contradiction.py`
 - `src/book_research_agent/core/answering/canon.py`
@@ -85,6 +87,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Dedicated `contradict` CLI command for cautious grounded contradiction/tension judgments
 - Read-only duplicate detection commands: `dedup-stats`, `find-duplicates`, `find-duplicate-chunks`
 - Dedicated `canon` CLI command for short cautious canon-oriented judgments with visible sources
+- Mode-aware answer-facing source depth defaults and stricter grounding prompt structure
 
 ## What is still missing
 

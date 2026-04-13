@@ -4,6 +4,7 @@ from book_research_agent.core.answering.compare import (
     _retrieve_compare_side,
     _source_references,
 )
+from book_research_agent.core.answering.defaults import DEFAULT_CONTRADICT_TOP_K
 from book_research_agent.core.answering.models import ContradictionResult
 from book_research_agent.core.answering.prompting import (
     build_grounded_contradiction_prompt,
@@ -20,7 +21,7 @@ def contradict_queries(
     indexed_chunks: list[IndexedChunk],
     embedding_provider: EmbeddingProvider,
     generation_provider: GenerationProvider,
-    top_k: int = 3,
+    top_k: int = DEFAULT_CONTRADICT_TOP_K,
 ) -> ContradictionResult:
     if top_k <= 0:
         raise ValueError("top_k must be greater than zero")

@@ -106,6 +106,8 @@ class AnswerServiceTests(unittest.TestCase):
         self.assertEqual(len(generation_provider.prompts), 1)
         self.assertIn("Question: auditor question", generation_provider.prompts[0])
         self.assertIn("title: Auditor Notes", generation_provider.prompts[0])
+        self.assertIn("Prefer specific source-backed details", generation_provider.prompts[0])
+        self.assertIn("limits: <uncertainty or missing evidence, or none>", generation_provider.prompts[0])
         self.assertIn("Domain guidance:", generation_provider.prompts[0])
         self.assertIn("Auditor", generation_provider.prompts[0])
         self.assertIn("Do not invent facts, citations, or canon.", generation_provider.prompts[0])

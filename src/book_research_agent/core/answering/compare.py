@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from book_research_agent.core.answering.defaults import DEFAULT_COMPARE_TOP_K
 from book_research_agent.core.answering.models import CompareResult, SourceReference
 from book_research_agent.core.answering.prompting import build_grounded_compare_prompt
 from book_research_agent.core.indexing.models import IndexedChunk
@@ -15,7 +16,7 @@ def compare_queries(
     indexed_chunks: list[IndexedChunk],
     embedding_provider: EmbeddingProvider,
     generation_provider: GenerationProvider,
-    top_k: int = 3,
+    top_k: int = DEFAULT_COMPARE_TOP_K,
 ) -> CompareResult:
     if top_k <= 0:
         raise ValueError("top_k must be greater than zero")

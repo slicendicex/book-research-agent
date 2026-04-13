@@ -33,6 +33,7 @@ Current retrieval stack is functional:
 - grounded compare mode
 - grounded contradiction/tension mode
 - grounded canon judgment mode
+- mode-aware answer-facing source depth defaults
 - CLI autoloads project-root `.env`
 - read-only corpus diagnostics commands
 - read-only duplicate detection commands
@@ -53,6 +54,7 @@ Current retrieval stack is functional:
 - Layer 09 — Contradiction / Tension Foundation
 - Layer 10 — Corpus Hygiene / Duplicate Detection
 - Layer 11 — Canon Mode Foundation
+- Layer 12 — Answer Quality / Grounding Improvements
 
 ---
 
@@ -122,10 +124,10 @@ Generation:
 
 ## Next target layer
 
-Layer 12 — Later expansion
+Layer 13 — Later expansion
 
 Goal:
-keep later work beyond canon-aware retrieval-grounded answering, compare/contradiction/canon modes, diagnostics, and corpus hygiene narrow and traceable.
+keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, diagnostics, and corpus hygiene narrow and traceable.
 
 Focus:
 - future provider expansion

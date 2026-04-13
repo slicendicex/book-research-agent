@@ -23,7 +23,12 @@ def build_grounded_answer_prompt(
     prompt_parts = [
         "You answer questions using only the provided sources.",
         "Keep the answer short, direct, and grounded in the sources.",
+        "Prefer specific source-backed details over vague interpretation.",
+        "Separate supported claims from uncertainty or missing evidence.",
         "If the sources do not contain the answer, say so plainly.",
+        "Use this shape: answer: <concise grounded answer>",
+        "Then add: support: <specific source-backed detail>",
+        "Then add: limits: <uncertainty or missing evidence, or none>",
         "Do not invent facts, citations, or canon.",
     ]
 
@@ -78,7 +83,9 @@ def build_grounded_compare_prompt(
         "You compare two topics using only the provided sources.",
         "Keep the comparison short, direct, and grounded in the sources.",
         "Cover shared themes, key differences, main tension, and uncertainties if relevant.",
+        "Prefer concrete source-backed similarities and differences over vague parallels.",
         "If the sources do not support a claim, say so plainly.",
+        "Use this shape: shared_ground, key_differences, tension, limits.",
         "Do not invent facts, citations, or canon.",
     ]
 
@@ -136,6 +143,7 @@ def build_grounded_contradiction_prompt(
         "You judge whether two source-grounded claims are aligned, in tension, contradictory, or unclear.",
         "Use only the provided sources.",
         "Bias toward caution: prefer 'in tension' or 'unclear' over 'contradictory' unless the sources strongly support contradiction.",
+        "Treat missing or weak evidence as unclear rather than contradiction.",
         "Keep the response short and structured.",
         "Use this shape: verdict: <aligned|in tension|contradictory|unclear>",
         "Then add: explanation: <one or two concise sentences>",
@@ -186,6 +194,7 @@ def build_grounded_canon_prompt(
         "Treat retrieved sources as the primary evidence.",
         "Prefer 'unclear' over overclaiming canon when support is limited.",
         "Identify competing variants only if the sources support them.",
+        "Do not convert interpretation into canon unless the sources justify it.",
         "Keep the response short and structured.",
         "Use this shape: current_canonical_reading: <one concise sentence>",
         "Then add: competing_variants: <concise note or unclear>",

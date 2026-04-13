@@ -4,6 +4,7 @@ from book_research_agent.core.answering.compare import (
     _retrieve_compare_side,
     _source_references,
 )
+from book_research_agent.core.answering.defaults import DEFAULT_CANON_TOP_K
 from book_research_agent.core.answering.models import CanonResult
 from book_research_agent.core.answering.prompting import build_grounded_canon_prompt
 from book_research_agent.core.indexing.models import IndexedChunk
@@ -17,7 +18,7 @@ def canon_query(
     indexed_chunks: list[IndexedChunk],
     embedding_provider: EmbeddingProvider,
     generation_provider: GenerationProvider,
-    top_k: int = 3,
+    top_k: int = DEFAULT_CANON_TOP_K,
 ) -> CanonResult:
     if top_k <= 0:
         raise ValueError("top_k must be greater than zero")
