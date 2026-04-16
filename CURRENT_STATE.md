@@ -35,6 +35,7 @@ Current retrieval stack is functional:
 - grounded canon judgment mode
 - mode-aware answer-facing source depth defaults
 - minimal grounded eval health check
+- read-only corpus coverage report
 - CLI autoloads project-root `.env`
 - read-only corpus diagnostics commands
 - read-only duplicate detection commands
@@ -57,6 +58,7 @@ Current retrieval stack is functional:
 - Layer 11 — Canon Mode Foundation
 - Layer 12 — Answer Quality / Grounding Improvements
 - Layer 13 — Grounded Eval Foundation
+- Layer 14 — Corpus Coverage Report Foundation
 
 ---
 
@@ -74,6 +76,7 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli compare "auditor" "ol
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli contradict "auditor as protector" "auditor as destroyer"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli canon "auditor language"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli corpus-report
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli stats
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli dedup-stats
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli find-duplicates
@@ -128,10 +131,10 @@ Generation:
 
 ## Next target layer
 
-Layer 14 — Later expansion
+Layer 15 — Later expansion
 
 Goal:
-keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, grounded eval, diagnostics, and corpus hygiene narrow and traceable.
+keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, grounded eval, corpus coverage, diagnostics, and corpus hygiene narrow and traceable.
 
 Focus:
 - future provider expansion

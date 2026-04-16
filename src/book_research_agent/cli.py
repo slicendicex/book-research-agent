@@ -16,6 +16,12 @@ from book_research_agent.core.chunking import chunk_documents, write_chunks_json
 from book_research_agent.core.chunking.serialize import read_chunks_jsonl
 from book_research_agent.core.config.env import get_env_var_status, load_project_env
 from book_research_agent.core.config.settings import load_settings
+from book_research_agent.core.corpus_report import (
+    CorpusReport,
+    MotifCandidate,
+    OrphanNote,
+    build_corpus_report,
+)
 from book_research_agent.core.diagnostics import (
     DiagnosticLookupError,
     get_chunk_by_id,
@@ -341,6 +347,42 @@ def build_parser() -> argparse.ArgumentParser:
         help="Input chunks JSONL path. Defaults to data/processed/chunks.jsonl.",
     )
     find_duplicate_chunks_parser.set_defaults(handler=run_find_duplicate_chunks)
+
+    corpus_report_parser = subparsers.add_parser(
+        "corpus-report",
+        help="Surface recurring motifs, emerging lines, and possible orphan notes.",
+    )
+    corpus_report_parser.add_argument(
+        "--documents-file",
+        type=Path,
+        default=None,
+        help="Input documents JSONL path. Defaults to data/processed/documents.jsonl.",
+    )
+    corpus_report_parser.add_argument(
+        "--chunks-file",
+        type=Path,
+        default=None,
+        help="Input chunks JSONL path. Defaults to data/processed/chunks.jsonl.",
+    )
+    corpus_report_parser.add_argument(
+        "--top-limit",
+        type=int,
+        default=10,
+        help="Maximum number of top motifs to show.",
+    )
+    corpus_report_parser.add_argument(
+        "--emerging-limit",
+        type=int,
+        default=10,
+        help="Maximum number of emerging motifs to show.",
+    )
+    corpus_report_parser.add_argument(
+        "--orphan-limit",
+        type=int,
+        default=10,
+        help="Maximum number of potential orphan notes to show.",
+    )
+    corpus_report_parser.set_defaults(handler=run_corpus_report)
 
     inspect_doc_parser = subparsers.add_parser(
         "inspect-doc",
@@ -820,6 +862,61 @@ def run_find_duplicate_chunks(args: argparse.Namespace) -> int:
     print(f"chunks_path: {chunks_file}")
     _print_duplicate_groups(groups, item_kind="chunk")
     return 0
+
+
+def run_corpus_report(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    documents_file = (
+        args.documents_file or (settings.data_processed_dir / "documents.jsonl")
+    )
+    chunks_file = args.chunks_file or (settings.data_processed_dir / "chunks.jsonl")
+
+    report = build_corpus_report(
+        documents_file,
+        chunks_file,
+        top_limit=args.top_limit,
+        emerging_limit=args.emerging_limit,
+        orphan_limit=args.orphan_limit,
+    )
+
+    print("book-research-agent corpus-report")
+    print(f"documents_path: {documents_file}")
+    print(f"chunks_path: {chunks_file}")
+    _print_corpus_report(report)
+    return 0
+
+
+def _print_corpus_report(report: CorpusReport) -> None:
+    print("Top motifs:")
+    _print_motifs(report.top_motifs)
+    print("Emerging motifs:")
+    _print_motifs(report.emerging_motifs)
+    print("Potential orphan notes:")
+    _print_orphan_notes(report.orphan_notes)
+
+
+def _print_motifs(motifs: list[MotifCandidate]) -> None:
+    if not motifs:
+        print("- none")
+        return
+
+    for motif in motifs:
+        print(
+            f"- {motif.text} "
+            f"(occurrences: {motif.occurrences}, documents: {motif.document_count})"
+        )
+
+
+def _print_orphan_notes(orphan_notes: list[OrphanNote]) -> None:
+    if not orphan_notes:
+        print("- none")
+        return
+
+    for note in orphan_notes:
+        print(
+            f"- {note.title} | {note.relative_path} "
+            f"(best_overlap: {note.best_overlap:.2f})"
+        )
 
 
 def run_inspect_doc(args: argparse.Namespace) -> int:
