@@ -6,13 +6,14 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, and improved grounding prompts with mode-aware retrieval depth defaults.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, and a minimal grounded eval health check.
 
 ## Current structure
 
 - `data/raw/`
 - `data/processed/`
 - `data/index/`
+- `data/eval/eval_cases.jsonl`
 - `docs/layers/`
 - `docs/layers/00-ai-boundary-config.md`
 - `docs/layers/01-document-ingestion.md`
@@ -27,6 +28,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/10-corpus-hygiene-duplicate-detection.md`
 - `docs/layers/11-canon-mode-foundation.md`
 - `docs/layers/12-answer-quality-grounding-improvements.md`
+- `docs/layers/13-grounded-eval-foundation.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
@@ -37,6 +39,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `src/book_research_agent/core/documents/`
 - `src/book_research_agent/core/ingestion/`
 - `src/book_research_agent/core/indexing/`
+- `src/book_research_agent/core/evaluation/`
 - `src/book_research_agent/core/generation/`
 - `src/book_research_agent/core/generation/openai_generation.py`
 - `src/book_research_agent/core/hygiene/`
@@ -90,6 +93,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Read-only duplicate detection commands: `dedup-stats`, `find-duplicates`, `find-duplicate-chunks`
 - Dedicated `canon` CLI command for short cautious canon-oriented judgments with visible sources
 - Mode-aware answer-facing source depth defaults and stricter grounding prompt structure
+- Dedicated `eval` CLI command for minimal retrieval and answer-presence health checks
 
 ## What is still missing
 

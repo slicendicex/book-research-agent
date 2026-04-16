@@ -23,6 +23,11 @@ from book_research_agent.core.diagnostics import (
     get_document_by_path,
     get_indexed_chunk_by_id,
 )
+from book_research_agent.core.evaluation import (
+    read_eval_cases_jsonl,
+    run_eval_cases,
+    summarize_eval_results,
+)
 from book_research_agent.core.hygiene import (
     DuplicateGroup,
     find_duplicate_chunks,
@@ -246,6 +251,30 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum number of grounded source references to use.",
     )
     canon_parser.set_defaults(handler=run_canon)
+
+    eval_parser = subparsers.add_parser(
+        "eval",
+        help="Run minimal grounded health-check eval cases.",
+    )
+    eval_parser.add_argument(
+        "--cases-file",
+        type=Path,
+        default=None,
+        help="Input eval cases JSONL path. Defaults to data/eval/eval_cases.jsonl.",
+    )
+    eval_parser.add_argument(
+        "--index-file",
+        type=Path,
+        default=None,
+        help="Input index JSONL path. Defaults to data/index/chunk_index.jsonl.",
+    )
+    eval_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=3,
+        help="Maximum number of source references to use per eval query.",
+    )
+    eval_parser.set_defaults(handler=run_eval)
 
     stats_parser = subparsers.add_parser(
         "stats",
@@ -677,6 +706,43 @@ def run_canon(args: argparse.Namespace) -> int:
         print(f"chunk_index: {source.chunk_index}")
 
     return 0
+
+
+def run_eval(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    cases_file = args.cases_file or (settings.data_dir / "eval" / "eval_cases.jsonl")
+    index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+
+    cases = read_eval_cases_jsonl(cases_file)
+    indexed_chunks = read_indexed_chunks_jsonl(index_file)
+    embedding_provider = create_embedding_provider(settings)
+    generation_provider = create_generation_provider(settings)
+    results = run_eval_cases(
+        cases,
+        indexed_chunks=indexed_chunks,
+        embedding_provider=embedding_provider,
+        generation_provider=generation_provider,
+        top_k=args.top_k,
+    )
+    summary = summarize_eval_results(results)
+
+    print("book-research-agent eval")
+    print(f"cases_path: {cases_file}")
+    print(f"index_path: {index_file}")
+    print(f"cases: {len(cases)}")
+
+    for result in results:
+        suffix = f" ({result.message})" if result.message else ""
+        print(f"[{result.case_id}] {result.status}{suffix}")
+        print(f"mode: {result.mode}")
+        print(f"retrieval_count: {result.retrieval_count}")
+        print(f"answer_present: {'yes' if result.answer_present else 'no'}")
+
+    print("Summary:")
+    print(f"PASS: {summary.pass_count}")
+    print(f"WARN: {summary.warn_count}")
+    print(f"FAIL: {summary.fail_count}")
+    return 1 if summary.fail_count else 0
 
 
 def run_stats(args: argparse.Namespace) -> int:

@@ -1,0 +1,4 @@
+{"id": "answer_1", "mode": "answer", "query": "What does the auditor represent?"}
+{"id": "canon_1", "mode": "canon", "query": "auditor language"}
+{"id": "compare_1", "mode": "compare", "query": "auditor || old man"}
+{"id": "contradict_1", "mode": "contradict", "query": "auditor as protector || auditor as destroyer"}
