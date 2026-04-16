@@ -5,7 +5,10 @@ import unittest
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from book_research_agent.core.config.settings import RuntimeSettings
 from book_research_agent.core.generation.cohere_generation import CohereGenerationProvider
+from book_research_agent.core.generation.openai_generation import OpenAIGenerationProvider
+from book_research_agent.core.providers.factory import create_generation_provider
 
 
 class GenerationProviderTests(unittest.TestCase):
@@ -40,6 +43,51 @@ class GenerationProviderTests(unittest.TestCase):
                 )
 
         self.assertEqual(provider.generate_text("prompt text"), "Grounded answer.")
+
+    def test_openai_generation_provider_raises_when_api_key_missing(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(
+                ValueError,
+                "OPENAI_API_KEY is required",
+            ):
+                OpenAIGenerationProvider(
+                    provider_name="openai",
+                    model_name="gpt-4.1-mini",
+                )
+
+    def test_openai_generation_provider_returns_output_text(self) -> None:
+        response = SimpleNamespace(output_text="Grounded OpenAI answer.")
+
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=True):
+            with patch(
+                "book_research_agent.core.generation.openai_generation.OpenAI"
+            ) as client_cls:
+                client_cls.return_value.responses.create.return_value = response
+                provider = OpenAIGenerationProvider(
+                    provider_name="openai",
+                    model_name="gpt-4.1-mini",
+                )
+
+        self.assertEqual(provider.generate_text("prompt text"), "Grounded OpenAI answer.")
+
+    def test_provider_factory_returns_openai_generation_provider(self) -> None:
+        settings = RuntimeSettings(
+            environment="test",
+            embedding_provider="dummy",
+            embedding_model="dummy-embedding-v1",
+            generation_provider="openai",
+            generation_model="gpt-4.1-mini",
+            has_cohere_api_key=False,
+            has_openai_api_key=True,
+            has_gemini_api_key=False,
+            has_anthropic_api_key=False,
+        )
+
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=True):
+            provider = create_generation_provider(settings)
+
+        self.assertIsInstance(provider, OpenAIGenerationProvider)
+        self.assertEqual(provider.model_name, "gpt-4.1-mini")
 
 
 if __name__ == "__main__":

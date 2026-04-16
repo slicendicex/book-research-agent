@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, and improved grounding prompts with mode-aware retrieval depth defaults.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, and improved grounding prompts with mode-aware retrieval depth defaults.
 
 ## Current structure
 
@@ -38,6 +38,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `src/book_research_agent/core/ingestion/`
 - `src/book_research_agent/core/indexing/`
 - `src/book_research_agent/core/generation/`
+- `src/book_research_agent/core/generation/openai_generation.py`
 - `src/book_research_agent/core/hygiene/`
 - `src/book_research_agent/core/answering/`
 - `src/book_research_agent/core/answering/defaults.py`
@@ -45,6 +46,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `src/book_research_agent/core/answering/contradiction.py`
 - `src/book_research_agent/core/answering/canon.py`
 - `src/book_research_agent/core/providers/`
+- `src/book_research_agent/core/providers/openai_embeddings.py`
 - `src/book_research_agent/core/retrieval/`
 - `src/book_research_agent/core/retrieval/source.py`
 - `src/book_research_agent/domain/`
@@ -72,13 +74,13 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Chunk metadata that preserves document traceability
 - Minimal ingestion tests
 - Minimal chunking tests
-- Cohere as the first real embedding provider
+- OpenAI as the active embedding provider
 - Local file-based chunk index in `data/index/chunk_index.jsonl`
 - Plain cosine-similarity semantic search over indexed chunks
 - Source-facing retrieval formatting with readable excerpts
 - Light same-document neighbor suppression for source-mode output
 - Dedicated `source` CLI command for source-first retrieval display
-- Cohere as the first real generation provider
+- OpenAI as the active generation provider
 - Retrieval-grounded answer assembly with visible source references
 - Dedicated `answer` CLI command for short grounded answers
 - Read-only corpus diagnostics commands: `stats`, `inspect-doc`, `inspect-chunk`, `inspect-index`
@@ -91,7 +93,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 
 ## What is still missing
 
-- Additional provider choices beyond the current Cohere-first path
+- Additional provider hardening beyond the current OpenAI and Cohere paths
 - Deeper domain-specific reasoning beyond the compact prompt lens
 
 ## Next logical layer

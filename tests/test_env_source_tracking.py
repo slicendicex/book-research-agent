@@ -10,10 +10,14 @@ from pathlib import Path
 from unittest.mock import patch
 
 from book_research_agent.cli import run_doctor
+from book_research_agent.core.config import env
 from book_research_agent.core.config.env import get_env_var_status, load_project_env
 
 
 class EnvSourceTrackingTests(unittest.TestCase):
+    def setUp(self) -> None:
+        env._ENV_SOURCES.clear()
+
     def test_load_project_env_reports_env_fallback_source(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             env_path = Path(temp_dir) / ".env"

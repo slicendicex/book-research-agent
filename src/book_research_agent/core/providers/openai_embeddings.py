@@ -1,0 +1,33 @@
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, field
+
+from openai import OpenAI
+
+
+@dataclass
+class OpenAIEmbeddingProvider:
+    provider_name: str
+    model_name: str
+    _client: OpenAI | None = field(default=None, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY is required for the 'openai' embedding provider")
+        self._client = OpenAI(api_key=api_key)
+
+    def embed_text(self, text: str, *, input_type: str) -> list[float]:
+        return self.embed_texts([text], input_type=input_type)[0]
+
+    def embed_texts(self, texts: list[str], *, input_type: str) -> list[list[float]]:
+        if not texts:
+            return []
+
+        response = self._client.embeddings.create(
+            model=self.model_name,
+            input=texts,
+            encoding_format="float",
+        )
+        return [list(item.embedding) for item in response.data]

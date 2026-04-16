@@ -16,6 +16,7 @@ from book_research_agent.core.indexing.serialize import (
 from book_research_agent.core.indexing.service import build_chunk_index
 from book_research_agent.core.providers.cohere_embeddings import CohereEmbeddingProvider
 from book_research_agent.core.providers.factory import create_embedding_provider
+from book_research_agent.core.providers.openai_embeddings import OpenAIEmbeddingProvider
 
 
 class StubEmbeddingProvider:
@@ -101,6 +102,25 @@ class IndexingTests(unittest.TestCase):
         self.assertIsInstance(provider, CohereEmbeddingProvider)
         self.assertEqual(provider.model_name, "embed-v4.0")
 
+    def test_provider_factory_returns_openai_embedding_provider(self) -> None:
+        settings = RuntimeSettings(
+            environment="test",
+            embedding_provider="openai",
+            embedding_model="text-embedding-3-small",
+            generation_provider="dummy",
+            generation_model="dummy-generation-v1",
+            has_cohere_api_key=False,
+            has_openai_api_key=True,
+            has_gemini_api_key=False,
+            has_anthropic_api_key=False,
+        )
+
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=False):
+            provider = create_embedding_provider(settings)
+
+        self.assertIsInstance(provider, OpenAIEmbeddingProvider)
+        self.assertEqual(provider.model_name, "text-embedding-3-small")
+
     def test_cohere_provider_raises_when_api_key_missing(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
             with self.assertRaisesRegex(
@@ -111,6 +131,42 @@ class IndexingTests(unittest.TestCase):
                     provider_name="cohere",
                     model_name="embed-v4.0",
                 )
+
+    def test_openai_provider_raises_when_api_key_missing(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(
+                ValueError,
+                "OPENAI_API_KEY is required",
+            ):
+                OpenAIEmbeddingProvider(
+                    provider_name="openai",
+                    model_name="text-embedding-3-small",
+                )
+
+    def test_openai_embedding_provider_returns_embeddings(self) -> None:
+        response = type(
+            "EmbeddingResponse",
+            (),
+            {
+                "data": [
+                    type("EmbeddingItem", (), {"embedding": [0.1, 0.2]})(),
+                    type("EmbeddingItem", (), {"embedding": [0.3, 0.4]})(),
+                ]
+            },
+        )()
+
+        with patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=True):
+            with patch(
+                "book_research_agent.core.providers.openai_embeddings.OpenAI"
+            ) as client_cls:
+                client_cls.return_value.embeddings.create.return_value = response
+                provider = OpenAIEmbeddingProvider(
+                    provider_name="openai",
+                    model_name="text-embedding-3-small",
+                )
+
+        embeddings = provider.embed_texts(["alpha", "beta"], input_type="search_document")
+        self.assertEqual(embeddings, [[0.1, 0.2], [0.3, 0.4]])
 
 
 if __name__ == "__main__":

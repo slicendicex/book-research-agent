@@ -25,7 +25,7 @@ Current retrieval stack is functional:
 - local private corpus
 - normalized documents
 - character-based chunks
-- Cohere embeddings
+- OpenAI embeddings
 - file-based local semantic index
 - top-k semantic search
 - source-facing retrieval display mode
@@ -105,11 +105,12 @@ raw corpus, processed artifacts, and index artifacts must remain outside git exc
 ## Providers
 
 Embeddings:
-- provider: `cohere`
-- model: `embed-v4.0`
+- provider: `openai`
+- model: `text-embedding-3-small`
 
 Generation:
-- provider: `cohere`
+- provider: `openai`
+- model: `gpt-4.1-mini`
 - answer mode: retrieval-grounded single-shot generation
 
 ---
