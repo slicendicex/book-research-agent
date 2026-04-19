@@ -187,6 +187,68 @@ class CorpusReportTests(unittest.TestCase):
         self.assertNotIn("ПЕРВЫЙ", concepts)
         self.assertNotIn("ПРАВО", concepts)
 
+    def test_corpus_report_applies_project_concept_stoplist(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            documents_path = root / "documents.jsonl"
+            chunks_path = root / "chunks.jsonl"
+            stoplist_path = root / "concept_stoplist.txt"
+            documents = [
+                make_document(
+                    "doc-1",
+                    "Concept One",
+                    "notes/concept-one.txt",
+                    "аудитор идея идея музей ритуал",
+                ),
+                make_document(
+                    "doc-2",
+                    "Concept Two",
+                    "notes/concept-two.txt",
+                    "аудитор идеи музея ритуал",
+                ),
+                make_document(
+                    "doc-3",
+                    "Concept Three",
+                    "notes/concept-three.txt",
+                    "аудитор идея лес",
+                ),
+            ]
+            chunks = [
+                make_chunk(
+                    f"{document.id}:0",
+                    document.id,
+                    document.title,
+                    document.metadata.relative_path,
+                    document.text,
+                )
+                for document in documents
+            ]
+            write_documents_jsonl(documents, documents_path)
+            write_chunks_jsonl(chunks, chunks_path)
+            stoplist_path.write_text("идея\n", encoding="utf-8")
+
+            report = build_corpus_report(
+                documents_path,
+                chunks_path,
+                concept_stoplist_path=stoplist_path,
+                top_limit=10,
+                emerging_limit=10,
+                orphan_limit=10,
+            )
+
+        core_concepts = {concept.text for concept in report.core_concepts}
+        secondary_concepts = {concept.text for concept in report.secondary_concepts}
+        co_occurrence_concepts = {
+            concept
+            for pair in report.co_occurrences
+            for concept in (pair.left, pair.right)
+        }
+
+        self.assertIn("АУДИТОР", core_concepts)
+        self.assertNotIn("ИДЕЯ", core_concepts)
+        self.assertNotIn("ИДЕЯ", secondary_concepts)
+        self.assertNotIn("ИДЕЯ", co_occurrence_concepts)
+
     def test_corpus_report_cli_prints_readable_sections(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             documents_path, chunks_path = self.write_fixture_artifacts(Path(temp_dir))

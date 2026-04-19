@@ -1,0 +1,7 @@
+# One concept per line. Entries are normalized before filtering.
+# Keep this list focused on broad, low-signal concepts.
+человек
+идея
+уровень
+форма
+смысл

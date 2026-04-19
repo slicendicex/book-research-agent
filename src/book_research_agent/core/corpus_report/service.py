@@ -15,9 +15,12 @@ from book_research_agent.core.corpus_report.models import (
     CorpusReport,
     OrphanNote,
 )
+from book_research_agent.core.config.settings import DATA_DIR
 from book_research_agent.core.documents.models import Document
 from book_research_agent.core.ingestion.serialize import read_documents_jsonl
 
+
+DEFAULT_CONCEPT_STOPLIST_PATH = DATA_DIR / "config" / "concept_stoplist.txt"
 
 STOPWORDS = {
     "and",
@@ -190,6 +193,7 @@ def build_corpus_report(
     documents_path: Path,
     chunks_path: Path,
     *,
+    concept_stoplist_path: Path | None = None,
     top_limit: int = 10,
     emerging_limit: int = 10,
     orphan_limit: int = 10,
@@ -197,9 +201,13 @@ def build_corpus_report(
 ) -> CorpusReport:
     documents = read_documents_jsonl(documents_path)
     chunks = read_chunks_jsonl(chunks_path)
+    stoplist_concepts = _load_concept_stoplist(
+        concept_stoplist_path or DEFAULT_CONCEPT_STOPLIST_PATH
+    )
     return _build_corpus_report(
         documents,
         chunks,
+        stoplist_concepts=stoplist_concepts,
         top_limit=top_limit,
         emerging_limit=emerging_limit,
         orphan_limit=orphan_limit,
@@ -211,12 +219,17 @@ def _build_corpus_report(
     documents: list[Document],
     chunks: list[Chunk],
     *,
+    stoplist_concepts: set[str],
     top_limit: int,
     emerging_limit: int,
     orphan_limit: int,
     orphan_threshold: float,
 ) -> CorpusReport:
-    concept_candidates = _extract_concept_candidates(documents, chunks)
+    concept_candidates = _extract_concept_candidates(
+        documents,
+        chunks,
+        stoplist_concepts=stoplist_concepts,
+    )
     core_concepts = _core_concepts(concept_candidates, limit=top_limit)
     core_texts = {concept.text for concept in core_concepts}
     secondary_concepts = _secondary_concepts(
@@ -224,9 +237,14 @@ def _build_corpus_report(
         excluded_texts=core_texts,
         limit=emerging_limit,
     )
-    co_occurrences = _strong_co_occurrences(documents, limit=top_limit)
+    co_occurrences = _strong_co_occurrences(
+        documents,
+        stoplist_concepts=stoplist_concepts,
+        limit=top_limit,
+    )
     orphan_notes = _find_orphan_notes(
         documents,
+        stoplist_concepts=stoplist_concepts,
         threshold=orphan_threshold,
         limit=orphan_limit,
     )
@@ -241,6 +259,8 @@ def _build_corpus_report(
 def _extract_concept_candidates(
     documents: list[Document],
     chunks: list[Chunk],
+    *,
+    stoplist_concepts: set[str],
 ) -> list[ConceptCandidate]:
     text_units = [chunk.text for chunk in chunks] or [
         document.text for document in documents
@@ -248,11 +268,15 @@ def _extract_concept_candidates(
     occurrence_counts: Counter[str] = Counter()
 
     for text in text_units:
-        occurrence_counts.update(_concepts_from_text(text))
+        occurrence_counts.update(
+            _concepts_from_text(text, stoplist_concepts=stoplist_concepts)
+        )
 
     document_counts: Counter[str] = Counter()
     for document in documents:
-        document_counts.update(set(_concepts_from_text(document.text)))
+        document_counts.update(
+            set(_concepts_from_text(document.text, stoplist_concepts=stoplist_concepts))
+        )
 
     candidates = [
         ConceptCandidate(
@@ -297,12 +321,15 @@ def _secondary_concepts(
 def _strong_co_occurrences(
     documents: list[Document],
     *,
+    stoplist_concepts: set[str],
     limit: int,
 ) -> list[ConceptCoOccurrence]:
     pair_counts: Counter[tuple[str, str]] = Counter()
 
     for document in documents:
-        concepts = sorted(set(_concepts_from_text(document.text)))
+        concepts = sorted(
+            set(_concepts_from_text(document.text, stoplist_concepts=stoplist_concepts))
+        )
         for index, left in enumerate(concepts):
             for right in concepts[index + 1:]:
                 pair_counts[(left, right)] += 1
@@ -323,11 +350,15 @@ def _strong_co_occurrences(
 def _find_orphan_notes(
     documents: list[Document],
     *,
+    stoplist_concepts: set[str],
     threshold: float,
     limit: int,
 ) -> list[OrphanNote]:
     token_sets = [
-        (document, set(_concepts_from_text(document.text)))
+        (
+            document,
+            set(_concepts_from_text(document.text, stoplist_concepts=stoplist_concepts)),
+        )
         for document in documents
     ]
     orphan_notes: list[OrphanNote] = []
@@ -364,13 +395,29 @@ def _tokenize(text: str) -> list[str]:
     ]
 
 
-def _concepts_from_text(text: str) -> list[str]:
+def _concepts_from_text(text: str, *, stoplist_concepts: set[str]) -> list[str]:
     concepts = [
         concept
         for token in _tokenize(text)
         if (concept := _normalize_concept(token)) is not None
+        and concept not in stoplist_concepts
     ]
     return concepts
+
+
+def _load_concept_stoplist(path: Path) -> set[str]:
+    if not path.exists():
+        return set()
+
+    stoplist_concepts: set[str] = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        entry = line.split("#", maxsplit=1)[0].strip()
+        if not entry:
+            continue
+        concept = _normalize_concept(entry)
+        if concept is not None:
+            stoplist_concepts.add(concept)
+    return stoplist_concepts
 
 
 def _normalize_concept(token: str) -> str | None:
