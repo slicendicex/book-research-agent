@@ -25,3 +25,5 @@ tmux-server-*.log
 !.codex/prompts/**
 *:Zone.Identifier
 *.Zone.Identifier
+repo-cart.md
+repo-cart.json
