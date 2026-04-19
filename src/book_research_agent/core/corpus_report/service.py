@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import re
 from collections import Counter
+from functools import lru_cache
 from pathlib import Path
+
+import pymorphy3
 
 from book_research_agent.core.chunking.serialize import read_chunks_jsonl
 from book_research_agent.core.chunks.models import Chunk
@@ -119,6 +122,7 @@ LOW_SIGNAL_CONCEPTS = {
     "СИСТЕМА",
     "ДОЛЖН",
     "ДРУГ",
+    "ПРАВО",
 }
 
 CONCEPT_ALIASES = {
@@ -179,35 +183,7 @@ CONCEPT_ALIASES = {
     "жизнью": "ЖИЗНЬ",
 }
 
-RUSSIAN_SUFFIXES = (
-    "иями",
-    "ями",
-    "ами",
-    "ого",
-    "ему",
-    "ыми",
-    "ими",
-    "ией",
-    "ия",
-    "ах",
-    "ях",
-    "ов",
-    "ев",
-    "ом",
-    "ем",
-    "ой",
-    "ый",
-    "ий",
-    "ая",
-    "ое",
-    "ые",
-    "ие",
-    "а",
-    "у",
-    "ы",
-    "и",
-    "е",
-)
+ALLOWED_RUSSIAN_POS = {"NOUN"}
 
 
 def build_corpus_report(
@@ -400,24 +376,26 @@ def _concepts_from_text(text: str) -> list[str]:
 def _normalize_concept(token: str) -> str | None:
     token = token.lower()
     concept = CONCEPT_ALIASES.get(token)
-    if concept is None:
-        concept = CONCEPT_ALIASES.get(_russian_stem(token))
-    if concept is None:
-        concept = _russian_stem(token).upper()
+    if concept is None and _is_russian_token(token):
+        parsed = _morph_analyzer().parse(token)[0]
+        if parsed.tag.POS not in ALLOWED_RUSSIAN_POS:
+            return None
+        concept = CONCEPT_ALIASES.get(parsed.normal_form, parsed.normal_form.upper())
+    elif concept is None:
+        concept = token.upper()
 
     if concept in LOW_SIGNAL_CONCEPTS or len(concept) < 3:
         return None
     return concept
 
 
-def _russian_stem(token: str) -> str:
-    if not re.search(r"[а-яё]", token):
-        return token
+def _is_russian_token(token: str) -> bool:
+    return bool(re.search(r"[а-яё]", token))
 
-    for suffix in RUSSIAN_SUFFIXES:
-        if token.endswith(suffix) and len(token) - len(suffix) >= 4:
-            return token[: -len(suffix)]
-    return token
+
+@lru_cache(maxsize=1)
+def _morph_analyzer() -> pymorphy3.MorphAnalyzer:
+    return pymorphy3.MorphAnalyzer()
 
 
 def _is_useful_concept(text: str) -> bool:

@@ -134,6 +134,59 @@ class CorpusReportTests(unittest.TestCase):
         self.assertEqual(concepts["МУЗЕЙ"].document_count, 2)
         self.assertNotIn("СИСТЕМА", concepts)
 
+    def test_corpus_report_filters_non_noun_russian_noise(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            documents_path = root / "documents.jsonl"
+            chunks_path = root / "chunks.jsonl"
+            documents = [
+                make_document(
+                    "doc-1",
+                    "Noise One",
+                    "notes/noise-one.txt",
+                    "аудитора земли земле видит первый прав",
+                ),
+                make_document(
+                    "doc-2",
+                    "Noise Two",
+                    "notes/noise-two.txt",
+                    "аудитором землёй земля видит первый прав",
+                ),
+            ]
+            chunks = [
+                make_chunk(
+                    "doc-1:0",
+                    "doc-1",
+                    documents[0].title,
+                    documents[0].metadata.relative_path,
+                    documents[0].text,
+                ),
+                make_chunk(
+                    "doc-2:0",
+                    "doc-2",
+                    documents[1].title,
+                    documents[1].metadata.relative_path,
+                    documents[1].text,
+                ),
+            ]
+            write_documents_jsonl(documents, documents_path)
+            write_chunks_jsonl(chunks, chunks_path)
+
+            report = build_corpus_report(
+                documents_path,
+                chunks_path,
+                top_limit=10,
+                emerging_limit=10,
+                orphan_limit=10,
+            )
+
+        concepts = {concept.text: concept for concept in report.core_concepts}
+        self.assertEqual(concepts["АУДИТОР"].document_count, 2)
+        self.assertEqual(concepts["ЗЕМЛЯ"].occurrences, 4)
+        self.assertNotIn("ВИДЕТЬ", concepts)
+        self.assertNotIn("ПЕРВЫЙ", concepts)
+        self.assertNotIn("ПРАВО", concepts)
+
     def test_corpus_report_cli_prints_readable_sections(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             documents_path, chunks_path = self.write_fixture_artifacts(Path(temp_dir))

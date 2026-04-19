@@ -35,7 +35,7 @@ Current retrieval stack is functional:
 - grounded canon judgment mode
 - mode-aware answer-facing source depth defaults
 - minimal grounded eval health check
-- read-only concept-level corpus coverage report
+- read-only morphology-aware concept-level corpus coverage report
 - CLI autoloads project-root `.env`
 - read-only corpus diagnostics commands
 - read-only duplicate detection commands
@@ -60,6 +60,7 @@ Current retrieval stack is functional:
 - Layer 13 — Grounded Eval Foundation
 - Layer 14 — Corpus Coverage Report Foundation
 - Layer 15 — Concept Normalization / Surface Report Foundation
+- Layer 16 — Pymorphy POS Filter Foundation
 
 ---
 
@@ -125,7 +126,7 @@ Generation:
 ## Known limitations
 
 - chunking is character-based
-- concept normalization is heuristic and deterministic
+- concept normalization is morphology-aware and deterministic
 - domain awareness is currently a compact prompt lens, not a reasoning layer
 - no MCP / function-calling layer yet
 
@@ -133,10 +134,10 @@ Generation:
 
 ## Next target layer
 
-Layer 16 — Later expansion
+Layer 17 — Later expansion
 
 Goal:
-keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, grounded eval, concept-level corpus coverage, diagnostics, and corpus hygiene narrow and traceable.
+keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, grounded eval, morphology-aware corpus coverage, diagnostics, and corpus hygiene narrow and traceable.
 
 Focus:
 - future provider expansion
