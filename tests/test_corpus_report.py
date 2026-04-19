@@ -57,7 +57,7 @@ def make_chunk(
 
 
 class CorpusReportTests(unittest.TestCase):
-    def test_corpus_report_surfaces_motifs_and_orphans(self) -> None:
+    def test_corpus_report_surfaces_concepts_co_occurrences_and_orphans(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             documents_path, chunks_path = self.write_fixture_artifacts(Path(temp_dir))
 
@@ -69,13 +69,70 @@ class CorpusReportTests(unittest.TestCase):
                 orphan_limit=10,
             )
 
-        top_motifs = {motif.text for motif in report.top_motifs}
-        emerging_motifs = {motif.text for motif in report.emerging_motifs}
+        core_concepts = {concept.text for concept in report.core_concepts}
+        secondary_concepts = {concept.text for concept in report.secondary_concepts}
+        co_occurrences = {
+            (pair.left, pair.right)
+            for pair in report.co_occurrences
+        }
         orphan_paths = {note.relative_path for note in report.orphan_notes}
 
-        self.assertIn("auditor", top_motifs)
-        self.assertIn("ritual", emerging_motifs)
+        self.assertIn("AUDITOR", core_concepts)
+        self.assertIn("RITUAL", secondary_concepts)
+        self.assertIn(("AUDITOR", "FOREST"), co_occurrences)
         self.assertIn("notes/orphan.txt", orphan_paths)
+
+    def test_corpus_report_normalizes_russian_word_forms(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            documents_path = root / "documents.jsonl"
+            chunks_path = root / "chunks.jsonl"
+            documents = [
+                make_document(
+                    "doc-1",
+                    "Аудитор",
+                    "notes/auditor-one.txt",
+                    "аудитор аудитора старик старика музей системы",
+                ),
+                make_document(
+                    "doc-2",
+                    "Старик",
+                    "notes/auditor-two.txt",
+                    "аудитором аудитору стариком старику музея систему",
+                ),
+            ]
+            chunks = [
+                make_chunk(
+                    "doc-1:0",
+                    "doc-1",
+                    documents[0].title,
+                    documents[0].metadata.relative_path,
+                    documents[0].text,
+                ),
+                make_chunk(
+                    "doc-2:0",
+                    "doc-2",
+                    documents[1].title,
+                    documents[1].metadata.relative_path,
+                    documents[1].text,
+                ),
+            ]
+            write_documents_jsonl(documents, documents_path)
+            write_chunks_jsonl(chunks, chunks_path)
+
+            report = build_corpus_report(
+                documents_path,
+                chunks_path,
+                top_limit=10,
+                emerging_limit=10,
+                orphan_limit=10,
+            )
+
+        concepts = {concept.text: concept for concept in report.core_concepts}
+        self.assertEqual(concepts["АУДИТОР"].occurrences, 4)
+        self.assertEqual(concepts["СТАРИК"].occurrences, 4)
+        self.assertEqual(concepts["МУЗЕЙ"].document_count, 2)
+        self.assertNotIn("СИСТЕМА", concepts)
 
     def test_corpus_report_cli_prints_readable_sections(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -95,10 +152,11 @@ class CorpusReportTests(unittest.TestCase):
         text = output.getvalue()
         self.assertEqual(exit_code, 0)
         self.assertIn("book-research-agent corpus-report", text)
-        self.assertIn("Top motifs:", text)
-        self.assertIn("Emerging motifs:", text)
+        self.assertIn("Core concepts:", text)
+        self.assertIn("Secondary concept lines:", text)
+        self.assertIn("Strong co-occurrences:", text)
         self.assertIn("Potential orphan notes:", text)
-        self.assertIn("- auditor", text)
+        self.assertIn("- AUDITOR", text)
         self.assertIn("notes/orphan.txt", text)
         self.assertNotIn("chunk_count", text)
         self.assertNotIn("chunks:", text)

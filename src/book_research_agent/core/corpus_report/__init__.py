@@ -1,9 +1,10 @@
-from .models import CorpusReport, MotifCandidate, OrphanNote
+from .models import ConceptCandidate, ConceptCoOccurrence, CorpusReport, OrphanNote
 from .service import build_corpus_report
 
 __all__ = [
+    "ConceptCandidate",
+    "ConceptCoOccurrence",
     "CorpusReport",
-    "MotifCandidate",
     "OrphanNote",
     "build_corpus_report",
 ]

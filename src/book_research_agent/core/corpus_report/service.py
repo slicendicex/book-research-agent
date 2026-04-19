@@ -7,8 +7,9 @@ from pathlib import Path
 from book_research_agent.core.chunking.serialize import read_chunks_jsonl
 from book_research_agent.core.chunks.models import Chunk
 from book_research_agent.core.corpus_report.models import (
+    ConceptCandidate,
+    ConceptCoOccurrence,
     CorpusReport,
-    MotifCandidate,
     OrphanNote,
 )
 from book_research_agent.core.documents.models import Document
@@ -33,16 +34,41 @@ STOPWORDS = {
     "быть",
     "все",
     "всё",
+    "где",
+    "даже",
     "для",
+    "другая",
+    "другие",
+    "другой",
+    "должен",
+    "должна",
+    "должно",
+    "должны",
     "есть",
     "еще",
     "ещё",
     "если",
     "или",
+    "именно",
     "как",
     "когда",
+    "каждая",
+    "каждое",
+    "каждый",
+    "которая",
+    "которое",
+    "которые",
+    "которого",
+    "котором",
     "который",
+    "которой",
+    "которым",
+    "которых",
+    "которую",
     "может",
+    "него",
+    "нет",
+    "нужно",
     "один",
     "одна",
     "одно",
@@ -50,23 +76,138 @@ STOPWORDS = {
     "она",
     "они",
     "перед",
+    "под",
     "после",
+    "поэтому",
     "потому",
+    "почему",
     "просто",
     "себя",
     "свои",
+    "своё",
+    "свое",
+    "своей",
     "свой",
     "свою",
     "так",
     "там",
+    "те",
+    "тех",
+    "то",
+    "тогда",
+    "тот",
     "только",
+    "твоё",
+    "твое",
+    "твой",
+    "твоя",
     "уже",
     "что",
     "чтобы",
     "через",
+    "этого",
     "этот",
     "это",
 }
+
+LOW_SIGNAL_CONCEPTS = {
+    "КОТОР",
+    "ПОД",
+    "ПОЧЕМ",
+    "ПОЭТОМ",
+    "СИСТЕМ",
+    "СИСТЕМА",
+    "ДОЛЖН",
+    "ДРУГ",
+}
+
+CONCEPT_ALIASES = {
+    "auditor": "AUDITOR",
+    "museum": "MUSEUM",
+    "old": "OLD MAN",
+    "аудитор": "АУДИТОР",
+    "аудитора": "АУДИТОР",
+    "аудитором": "АУДИТОР",
+    "аудитору": "АУДИТОР",
+    "аудиторы": "АУДИТОР",
+    "дерево": "ДЕРЕВО",
+    "дерева": "ДЕРЕВО",
+    "деревом": "ДЕРЕВО",
+    "дереву": "ДЕРЕВО",
+    "лес": "ЛЕС",
+    "леса": "ЛЕС",
+    "лесом": "ЛЕС",
+    "лесу": "ЛЕС",
+    "музеем": "МУЗЕЙ",
+    "музей": "МУЗЕЙ",
+    "музея": "МУЗЕЙ",
+    "музею": "МУЗЕЙ",
+    "память": "ПАМЯТЬ",
+    "памяти": "ПАМЯТЬ",
+    "ритуал": "РИТУАЛ",
+    "ритуала": "РИТУАЛ",
+    "ритуалом": "РИТУАЛ",
+    "старик": "СТАРИК",
+    "старика": "СТАРИК",
+    "стариком": "СТАРИК",
+    "старику": "СТАРИК",
+    "система": "СИСТЕМА",
+    "системе": "СИСТЕМА",
+    "системой": "СИСТЕМА",
+    "систему": "СИСТЕМА",
+    "системы": "СИСТЕМА",
+    "стол": "СТОЛ",
+    "стола": "СТОЛ",
+    "столом": "СТОЛ",
+    "столу": "СТОЛ",
+    "трещина": "ТРЕЩИНА",
+    "трещине": "ТРЕЩИНА",
+    "трещиной": "ТРЕЩИНА",
+    "трещину": "ТРЕЩИНА",
+    "трещины": "ТРЕЩИНА",
+    "форма": "ФОРМА",
+    "форме": "ФОРМА",
+    "формой": "ФОРМА",
+    "форму": "ФОРМА",
+    "формы": "ФОРМА",
+    "читатель": "ЧИТАТЕЛЬ",
+    "читателя": "ЧИТАТЕЛЬ",
+    "читателем": "ЧИТАТЕЛЬ",
+    "читателю": "ЧИТАТЕЛЬ",
+    "жизнь": "ЖИЗНЬ",
+    "жизни": "ЖИЗНЬ",
+    "жизнью": "ЖИЗНЬ",
+}
+
+RUSSIAN_SUFFIXES = (
+    "иями",
+    "ями",
+    "ами",
+    "ого",
+    "ему",
+    "ыми",
+    "ими",
+    "ией",
+    "ия",
+    "ах",
+    "ях",
+    "ов",
+    "ев",
+    "ом",
+    "ем",
+    "ой",
+    "ый",
+    "ий",
+    "ая",
+    "ое",
+    "ые",
+    "ие",
+    "а",
+    "у",
+    "ы",
+    "и",
+    "е",
+)
 
 
 def build_corpus_report(
@@ -99,88 +240,108 @@ def _build_corpus_report(
     orphan_limit: int,
     orphan_threshold: float,
 ) -> CorpusReport:
-    motif_candidates = _extract_motif_candidates(documents, chunks)
-    top_motifs = _top_motifs(motif_candidates, limit=top_limit)
-    top_texts = {motif.text for motif in top_motifs}
-    emerging_motifs = _emerging_motifs(
-        motif_candidates,
-        excluded_texts=top_texts,
+    concept_candidates = _extract_concept_candidates(documents, chunks)
+    core_concepts = _core_concepts(concept_candidates, limit=top_limit)
+    core_texts = {concept.text for concept in core_concepts}
+    secondary_concepts = _secondary_concepts(
+        concept_candidates,
+        excluded_texts=core_texts,
         limit=emerging_limit,
     )
+    co_occurrences = _strong_co_occurrences(documents, limit=top_limit)
     orphan_notes = _find_orphan_notes(
         documents,
         threshold=orphan_threshold,
         limit=orphan_limit,
     )
     return CorpusReport(
-        top_motifs=top_motifs,
-        emerging_motifs=emerging_motifs,
+        core_concepts=core_concepts,
+        secondary_concepts=secondary_concepts,
+        co_occurrences=co_occurrences,
         orphan_notes=orphan_notes,
     )
 
 
-def _extract_motif_candidates(
+def _extract_concept_candidates(
     documents: list[Document],
     chunks: list[Chunk],
-) -> list[MotifCandidate]:
+) -> list[ConceptCandidate]:
     text_units = [chunk.text for chunk in chunks] or [
         document.text for document in documents
     ]
     occurrence_counts: Counter[str] = Counter()
 
     for text in text_units:
-        tokens = _tokenize(text)
-        occurrence_counts.update(tokens)
-        occurrence_counts.update(_bigrams(tokens))
+        occurrence_counts.update(_concepts_from_text(text))
 
     document_counts: Counter[str] = Counter()
     for document in documents:
-        tokens = _tokenize(document.text)
-        document_counts.update(set(tokens))
-        document_counts.update(set(_bigrams(tokens)))
+        document_counts.update(set(_concepts_from_text(document.text)))
 
     candidates = [
-        MotifCandidate(
+        ConceptCandidate(
             text=text,
             occurrences=occurrences,
             document_count=document_counts.get(text, 0),
         )
         for text, occurrences in occurrence_counts.items()
-        if occurrences > 1 and _is_useful_motif(text)
+        if occurrences > 1 and _is_useful_concept(text)
     ]
-    candidates.sort(
-        key=lambda motif: (-motif.occurrences, -motif.document_count, motif.text)
-    )
+    candidates.sort(key=_concept_sort_key)
     return candidates
 
 
-def _top_motifs(
-    candidates: list[MotifCandidate],
+def _core_concepts(
+    candidates: list[ConceptCandidate],
     *,
     limit: int,
-) -> list[MotifCandidate]:
+) -> list[ConceptCandidate]:
     return [
-        motif
-        for motif in candidates
-        if motif.document_count > 1
+        concept
+        for concept in candidates
+        if concept.document_count > 1
     ][:limit]
 
 
-def _emerging_motifs(
-    candidates: list[MotifCandidate],
+def _secondary_concepts(
+    candidates: list[ConceptCandidate],
     *,
     excluded_texts: set[str],
     limit: int,
-) -> list[MotifCandidate]:
-    emerging = [
-        motif
-        for motif in candidates
-        if motif.text not in excluded_texts and motif.occurrences <= 4
+) -> list[ConceptCandidate]:
+    secondary = [
+        concept
+        for concept in candidates
+        if concept.text not in excluded_texts and concept.document_count > 1
     ]
-    emerging.sort(
-        key=lambda motif: (motif.occurrences, -motif.document_count, motif.text)
-    )
-    return emerging[:limit]
+    secondary.sort(key=_concept_sort_key)
+    return secondary[:limit]
+
+
+def _strong_co_occurrences(
+    documents: list[Document],
+    *,
+    limit: int,
+) -> list[ConceptCoOccurrence]:
+    pair_counts: Counter[tuple[str, str]] = Counter()
+
+    for document in documents:
+        concepts = sorted(set(_concepts_from_text(document.text)))
+        for index, left in enumerate(concepts):
+            for right in concepts[index + 1:]:
+                pair_counts[(left, right)] += 1
+
+    pairs = [
+        ConceptCoOccurrence(
+            left=left,
+            right=right,
+            document_count=document_count,
+        )
+        for (left, right), document_count in pair_counts.items()
+        if document_count > 1
+    ]
+    pairs.sort(key=lambda pair: (-pair.document_count, pair.left, pair.right))
+    return pairs[:limit]
 
 
 def _find_orphan_notes(
@@ -190,7 +351,7 @@ def _find_orphan_notes(
     limit: int,
 ) -> list[OrphanNote]:
     token_sets = [
-        (document, set(_tokenize(document.text)))
+        (document, set(_concepts_from_text(document.text)))
         for document in documents
     ]
     orphan_notes: list[OrphanNote] = []
@@ -227,16 +388,44 @@ def _tokenize(text: str) -> list[str]:
     ]
 
 
-def _bigrams(tokens: list[str]) -> list[str]:
-    return [
-        f"{left} {right}"
-        for left, right in zip(tokens, tokens[1:])
-        if left != right
+def _concepts_from_text(text: str) -> list[str]:
+    concepts = [
+        concept
+        for token in _tokenize(text)
+        if (concept := _normalize_concept(token)) is not None
     ]
+    return concepts
 
 
-def _is_useful_motif(text: str) -> bool:
+def _normalize_concept(token: str) -> str | None:
+    token = token.lower()
+    concept = CONCEPT_ALIASES.get(token)
+    if concept is None:
+        concept = CONCEPT_ALIASES.get(_russian_stem(token))
+    if concept is None:
+        concept = _russian_stem(token).upper()
+
+    if concept in LOW_SIGNAL_CONCEPTS or len(concept) < 3:
+        return None
+    return concept
+
+
+def _russian_stem(token: str) -> str:
+    if not re.search(r"[а-яё]", token):
+        return token
+
+    for suffix in RUSSIAN_SUFFIXES:
+        if token.endswith(suffix) and len(token) - len(suffix) >= 4:
+            return token[: -len(suffix)]
+    return token
+
+
+def _is_useful_concept(text: str) -> bool:
     return len(text) >= 3 and not text.isdigit()
+
+
+def _concept_sort_key(concept: ConceptCandidate) -> tuple[int, int, str]:
+    return (-concept.document_count, -concept.occurrences, concept.text)
 
 
 def _jaccard_similarity(left: set[str], right: set[str]) -> float:

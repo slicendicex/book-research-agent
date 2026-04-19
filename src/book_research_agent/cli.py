@@ -17,8 +17,9 @@ from book_research_agent.core.chunking.serialize import read_chunks_jsonl
 from book_research_agent.core.config.env import get_env_var_status, load_project_env
 from book_research_agent.core.config.settings import load_settings
 from book_research_agent.core.corpus_report import (
+    ConceptCandidate,
+    ConceptCoOccurrence,
     CorpusReport,
-    MotifCandidate,
     OrphanNote,
     build_corpus_report,
 )
@@ -350,7 +351,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     corpus_report_parser = subparsers.add_parser(
         "corpus-report",
-        help="Surface recurring motifs, emerging lines, and possible orphan notes.",
+        help="Surface concept-level corpus coverage and possible orphan notes.",
     )
     corpus_report_parser.add_argument(
         "--documents-file",
@@ -887,23 +888,37 @@ def run_corpus_report(args: argparse.Namespace) -> int:
 
 
 def _print_corpus_report(report: CorpusReport) -> None:
-    print("Top motifs:")
-    _print_motifs(report.top_motifs)
-    print("Emerging motifs:")
-    _print_motifs(report.emerging_motifs)
+    print("Core concepts:")
+    _print_concepts(report.core_concepts)
+    print("Secondary concept lines:")
+    _print_concepts(report.secondary_concepts)
+    print("Strong co-occurrences:")
+    _print_co_occurrences(report.co_occurrences)
     print("Potential orphan notes:")
     _print_orphan_notes(report.orphan_notes)
 
 
-def _print_motifs(motifs: list[MotifCandidate]) -> None:
-    if not motifs:
+def _print_concepts(concepts: list[ConceptCandidate]) -> None:
+    if not concepts:
         print("- none")
         return
 
-    for motif in motifs:
+    for concept in concepts:
         print(
-            f"- {motif.text} "
-            f"(occurrences: {motif.occurrences}, documents: {motif.document_count})"
+            f"- {concept.text} "
+            f"(occurrences: {concept.occurrences}, documents: {concept.document_count})"
+        )
+
+
+def _print_co_occurrences(pairs: list[ConceptCoOccurrence]) -> None:
+    if not pairs:
+        print("- none")
+        return
+
+    for pair in pairs:
+        print(
+            f"- {pair.left} <-> {pair.right} "
+            f"(documents: {pair.document_count})"
         )
 
 

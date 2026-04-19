@@ -4,9 +4,16 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class MotifCandidate:
+class ConceptCandidate:
     text: str
     occurrences: int
+    document_count: int
+
+
+@dataclass(frozen=True)
+class ConceptCoOccurrence:
+    left: str
+    right: str
     document_count: int
 
 
@@ -19,6 +26,7 @@ class OrphanNote:
 
 @dataclass(frozen=True)
 class CorpusReport:
-    top_motifs: list[MotifCandidate]
-    emerging_motifs: list[MotifCandidate]
+    core_concepts: list[ConceptCandidate]
+    secondary_concepts: list[ConceptCandidate]
+    co_occurrences: list[ConceptCoOccurrence]
     orphan_notes: list[OrphanNote]

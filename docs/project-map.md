@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a minimal grounded eval health check, and a read-only corpus coverage report.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a minimal grounded eval health check, and a read-only concept-level corpus coverage report.
 
 ## Current structure
 
@@ -30,6 +30,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/12-answer-quality-grounding-improvements.md`
 - `docs/layers/13-grounded-eval-foundation.md`
 - `docs/layers/14-corpus-coverage-report-foundation.md`
+- `docs/layers/15-concept-normalization-surface-report-foundation.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
@@ -96,7 +97,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Dedicated `canon` CLI command for short cautious canon-oriented judgments with visible sources
 - Mode-aware answer-facing source depth defaults and stricter grounding prompt structure
 - Dedicated `eval` CLI command for minimal retrieval and answer-presence health checks
-- Dedicated `corpus-report` CLI command for recurring motifs, emerging motifs, and potential orphan notes
+- Dedicated `corpus-report` CLI command for normalized concepts, secondary concept lines, co-occurrences, and potential orphan notes
 
 ## What is still missing
 
@@ -105,4 +106,4 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 
 ## Next logical layer
 
-Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, grounded eval, and corpus coverage foundation.
+Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, grounded eval, and concept-level corpus coverage foundation.
