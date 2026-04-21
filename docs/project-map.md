@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a minimal grounded eval health check, and a read-only morphology-aware concept-level corpus coverage report with project concept curation.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, paragraph-aware chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a minimal grounded eval health check, and a read-only morphology-aware concept-level corpus coverage report with project concept curation.
 
 ## Current structure
 
@@ -34,6 +34,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/15-concept-normalization-surface-report-foundation.md`
 - `docs/layers/16-pymorphy-pos-filter-foundation.md`
 - `docs/layers/17-concept-curation-domain-stoplist-foundation.md`
+- `docs/layers/18_chunking_retrieval_upgrade_foundation.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
@@ -79,13 +80,13 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Document models for normalized local source files
 - Ingestion pipeline for `.txt` and `.md` files from `data/raw/`
 - JSONL export to `data/processed/documents.jsonl`
-- Character-based chunking from `documents.jsonl` to `chunks.jsonl`
+- Paragraph-aware chunking from `documents.jsonl` to `chunks.jsonl` with character fallback for oversized paragraphs
 - Chunk metadata that preserves document traceability
 - Minimal ingestion tests
 - Minimal chunking tests
 - OpenAI as the active embedding provider
 - Local file-based chunk index in `data/index/chunk_index.jsonl`
-- Plain cosine-similarity semantic search over indexed chunks
+- Plain cosine-similarity semantic search over indexed chunks with lightweight diversity filtering
 - Source-facing retrieval formatting with readable excerpts
 - Light same-document neighbor suppression for source-mode output
 - Dedicated `source` CLI command for source-first retrieval display
@@ -109,4 +110,4 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 
 ## Next logical layer
 
-Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, grounded eval, and curated morphology-aware concept-level corpus coverage foundation.
+Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, grounded eval, curated morphology-aware concept-level corpus coverage, and upgraded chunking/retrieval foundation.

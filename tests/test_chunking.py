@@ -47,6 +47,34 @@ class ChunkingTests(unittest.TestCase):
         self.assertEqual(chunks[1].metadata.document_relative_path, "doc-2.txt")
         self.assertEqual(chunks[1].metadata.source_title, "Example")
 
+    def test_paragraph_aware_chunking_keeps_paragraph_boundaries(self) -> None:
+        document = make_document(
+            "doc-paragraphs",
+            "alpha one\n\nbeta two\n\ngamma three",
+        )
+
+        chunks = chunk_documents([document], chunk_size=21, chunk_overlap=8)
+
+        self.assertEqual([chunk.text for chunk in chunks], ["alpha one\n\nbeta two", "beta two\n\ngamma three"])
+        self.assertEqual(chunks[0].metadata.char_start, 0)
+        self.assertEqual(chunks[0].metadata.char_end, len("alpha one\n\nbeta two"))
+        self.assertEqual(chunks[1].metadata.char_start, len("alpha one\n\n"))
+
+    def test_oversized_paragraph_falls_back_to_character_split(self) -> None:
+        document = make_document(
+            "doc-fallback",
+            "abcdefghij\n\ntail",
+        )
+
+        chunks = chunk_documents([document], chunk_size=4, chunk_overlap=1)
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks],
+            ["abcd", "defg", "ghij", "tail"],
+        )
+        self.assertEqual(chunks[2].metadata.char_start, 6)
+        self.assertEqual(chunks[3].metadata.char_start, len("abcdefghij\n\n"))
+
     def test_invalid_overlap_raises_clear_error(self) -> None:
         document = make_document("doc-3", "text")
 

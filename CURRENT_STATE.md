@@ -24,10 +24,10 @@ raw files
 Current retrieval stack is functional:
 - local private corpus
 - normalized documents
-- character-based chunks
+- paragraph-aware chunks with character fallback
 - OpenAI embeddings
 - file-based local semantic index
-- top-k semantic search
+- top-k semantic search with lightweight diversity filtering
 - source-facing retrieval display mode
 - canon-aware answer prompt lens
 - grounded compare mode
@@ -62,6 +62,7 @@ Current retrieval stack is functional:
 - Layer 15 — Concept Normalization / Surface Report Foundation
 - Layer 16 — Pymorphy POS Filter Foundation
 - Layer 17 — Concept Curation / Domain Stoplist Foundation
+- Layer 18 — Chunking / Retrieval Upgrade Foundation
 
 ---
 
@@ -126,7 +127,7 @@ Generation:
 
 ## Known limitations
 
-- chunking is character-based
+- chunking is paragraph-aware but still heuristic
 - concept normalization is morphology-aware and deterministic
 - concept curation is currently a small manual stoplist
 - domain awareness is currently a compact prompt lens, not a reasoning layer
@@ -136,10 +137,10 @@ Generation:
 
 ## Next target layer
 
-Layer 18 — Later expansion
+Layer 19 — Later expansion
 
 Goal:
-keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, grounded eval, curated morphology-aware corpus coverage, diagnostics, and corpus hygiene narrow and traceable.
+keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, grounded eval, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, and upgraded chunking/retrieval narrow and traceable.
 
 Focus:
 - future provider expansion

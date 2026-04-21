@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import difflib
 import math
 from dataclasses import dataclass
 
@@ -11,6 +12,10 @@ from book_research_agent.core.providers.base import EmbeddingProvider
 class SearchResult:
     indexed_chunk: IndexedChunk
     score: float
+
+
+DEFAULT_TEXT_SIMILARITY_THRESHOLD = 0.96
+DEFAULT_SAME_DOCUMENT_SIMILARITY_THRESHOLD = 0.9
 
 
 def cosine_similarity(left: list[float], right: list[float]) -> float:
@@ -48,4 +53,72 @@ def search_index(
         for indexed_chunk in indexed_chunks
     ]
     scored_results.sort(key=lambda result: result.score, reverse=True)
-    return scored_results[:top_k]
+    return filter_diverse_results(scored_results, max_results=top_k)
+
+
+def filter_diverse_results(
+    search_results: list[SearchResult],
+    *,
+    max_results: int,
+    similarity_threshold: float = DEFAULT_TEXT_SIMILARITY_THRESHOLD,
+    same_document_similarity_threshold: float = (
+        DEFAULT_SAME_DOCUMENT_SIMILARITY_THRESHOLD
+    ),
+) -> list[SearchResult]:
+    if max_results <= 0:
+        raise ValueError("max_results must be greater than zero")
+
+    kept_results: list[SearchResult] = []
+    for result in search_results:
+        if _is_near_duplicate(
+            result,
+            kept_results,
+            similarity_threshold=similarity_threshold,
+            same_document_similarity_threshold=same_document_similarity_threshold,
+        ):
+            continue
+
+        kept_results.append(result)
+        if len(kept_results) >= max_results:
+            break
+
+    return kept_results
+
+
+def _is_near_duplicate(
+    candidate: SearchResult,
+    kept_results: list[SearchResult],
+    *,
+    similarity_threshold: float,
+    same_document_similarity_threshold: float,
+) -> bool:
+    candidate_text = _normalize_text(candidate.indexed_chunk.text)
+
+    for kept in kept_results:
+        kept_text = _normalize_text(kept.indexed_chunk.text)
+        if candidate_text == kept_text:
+            return True
+
+        similarity = _text_similarity(candidate_text, kept_text)
+        same_document = (
+            candidate.indexed_chunk.document_id == kept.indexed_chunk.document_id
+        )
+        threshold = (
+            same_document_similarity_threshold
+            if same_document
+            else similarity_threshold
+        )
+        if similarity >= threshold:
+            return True
+
+    return False
+
+
+def _normalize_text(text: str) -> str:
+    return " ".join(text.lower().split())
+
+
+def _text_similarity(left: str, right: str) -> float:
+    if not left or not right:
+        return 0.0
+    return difflib.SequenceMatcher(a=left, b=right).ratio()

@@ -27,11 +27,13 @@ def make_indexed_chunk(
     title: str,
     relative_path: str,
     embedding: list[float],
+    *,
+    text: str | None = None,
 ) -> IndexedChunk:
     return IndexedChunk(
         chunk_id=chunk_id,
         document_id=chunk_id.split(":", maxsplit=1)[0],
-        text=f"{title} body text",
+        text=text or f"{title} body text",
         metadata=ChunkMetadata(
             document_relative_path=relative_path,
             source_title=title,
@@ -67,6 +69,78 @@ class RetrievalSearchTests(unittest.TestCase):
         self.assertEqual(results[0].indexed_chunk.chunk_id, "doc-a:0")
         self.assertEqual(results[1].indexed_chunk.chunk_id, "doc-c:0")
         self.assertGreater(results[0].score, results[1].score)
+
+    def test_search_filters_exact_duplicate_text_results(self) -> None:
+        indexed_chunks = [
+            make_indexed_chunk(
+                "doc-a:0",
+                "Alpha A",
+                "alpha-a.md",
+                [1.0, 0.0],
+                text="duplicate chunk body",
+            ),
+            make_indexed_chunk(
+                "doc-b:0",
+                "Alpha B",
+                "alpha-b.md",
+                [0.99, 0.01],
+                text="duplicate chunk body",
+            ),
+            make_indexed_chunk(
+                "doc-c:0",
+                "Fallback",
+                "fallback.md",
+                [0.85, 0.15],
+                text="fallback unique body",
+            ),
+        ]
+
+        results = search_index(
+            query="alpha query",
+            indexed_chunks=indexed_chunks,
+            embedding_provider=StubEmbeddingProvider(),
+            top_k=2,
+        )
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0].indexed_chunk.chunk_id, "doc-a:0")
+        self.assertEqual(results[1].indexed_chunk.chunk_id, "doc-c:0")
+
+    def test_search_filters_near_duplicate_same_document_chunks(self) -> None:
+        indexed_chunks = [
+            make_indexed_chunk(
+                "doc-a:0",
+                "Alpha 0",
+                "alpha.md",
+                [1.0, 0.0],
+                text="alpha concept appears in the museum and the forest",
+            ),
+            make_indexed_chunk(
+                "doc-a:1",
+                "Alpha 1",
+                "alpha.md",
+                [0.98, 0.02],
+                text="alpha concept appears in the museum and the forest again",
+            ),
+            make_indexed_chunk(
+                "doc-b:0",
+                "Beta",
+                "beta.md",
+                [0.87, 0.13],
+                text="alpha conflict with the old man becomes visible",
+            ),
+        ]
+
+        results = search_index(
+            query="alpha query",
+            indexed_chunks=indexed_chunks,
+            embedding_provider=StubEmbeddingProvider(),
+            top_k=2,
+        )
+
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0].indexed_chunk.chunk_id, "doc-a:0")
+        self.assertEqual(results[1].indexed_chunk.chunk_id, "doc-b:0")
 
 
 if __name__ == "__main__":
