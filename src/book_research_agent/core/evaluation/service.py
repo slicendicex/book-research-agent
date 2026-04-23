@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 from book_research_agent.core.answering import (
@@ -9,7 +10,12 @@ from book_research_agent.core.answering import (
     compare_queries,
     contradict_queries,
 )
-from book_research_agent.core.evaluation.models import EvalCase, EvalResult, EvalSummary
+from book_research_agent.core.evaluation.models import (
+    EvalCase,
+    EvalResult,
+    EvalRetrievalSnapshot,
+    EvalSummary,
+)
 from book_research_agent.core.indexing.models import IndexedChunk
 from book_research_agent.core.providers.base import EmbeddingProvider, GenerationProvider
 from book_research_agent.core.retrieval import filter_neighboring_results, search_index
@@ -33,6 +39,7 @@ def read_eval_cases_jsonl(path: Path) -> list[EvalCase]:
                 id=str(payload["id"]).strip(),
                 mode=str(payload["mode"]).strip(),
                 query=str(payload["query"]).strip(),
+                notes=str(payload.get("notes", "")).strip(),
             )
         except KeyError as error:
             raise ValueError(f"Missing eval case field on line {line_number}: {error}") from error
@@ -77,6 +84,23 @@ def summarize_eval_results(results: list[EvalResult]) -> EvalSummary:
     )
 
 
+def write_eval_report_json(
+    path: Path,
+    *,
+    results: list[EvalResult],
+    summary: EvalSummary,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "summary": asdict(summary),
+        "results": [asdict(result) for result in results],
+    }
+    path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 def _run_eval_case(
     case: EvalCase,
     *,
@@ -87,7 +111,7 @@ def _run_eval_case(
     warn_below: int,
 ) -> EvalResult:
     try:
-        retrieval_count = _retrieval_count(
+        retrieval_snapshots = _retrieval_snapshots(
             case,
             indexed_chunks=indexed_chunks,
             embedding_provider=embedding_provider,
@@ -101,7 +125,13 @@ def _run_eval_case(
             retrieval_count=0,
             answer_present=False,
             message=str(error),
+            retrieval_snapshots=[],
         )
+
+    retrieval_count = min(
+        (len(snapshot.top_chunk_ids) for snapshot in retrieval_snapshots),
+        default=0,
+    )
 
     if retrieval_count == 0:
         return EvalResult(
@@ -111,6 +141,7 @@ def _run_eval_case(
             retrieval_count=0,
             answer_present=False,
             message="no retrieval",
+            retrieval_snapshots=retrieval_snapshots,
         )
 
     answer_text = _run_answer_mode(
@@ -129,6 +160,7 @@ def _run_eval_case(
             retrieval_count=retrieval_count,
             answer_present=False,
             message="empty answer",
+            retrieval_snapshots=retrieval_snapshots,
         )
 
     if retrieval_count < warn_below:
@@ -139,6 +171,7 @@ def _run_eval_case(
             retrieval_count=retrieval_count,
             answer_present=True,
             message="low retrieval",
+            retrieval_snapshots=retrieval_snapshots,
         )
 
     return EvalResult(
@@ -147,31 +180,72 @@ def _run_eval_case(
         status="PASS",
         retrieval_count=retrieval_count,
         answer_present=True,
+        retrieval_snapshots=retrieval_snapshots,
     )
 
 
-def _retrieval_count(
+def _retrieval_snapshots(
     case: EvalCase,
     *,
     indexed_chunks: list[IndexedChunk],
     embedding_provider: EmbeddingProvider,
     top_k: int,
-) -> int:
+) -> list[EvalRetrievalSnapshot]:
     queries = _case_queries(case)
-    counts = [
-        len(
-            filter_neighboring_results(
-                search_index(
-                    query=query,
-                    indexed_chunks=indexed_chunks,
-                    embedding_provider=embedding_provider,
-                    top_k=max(top_k * 3, top_k),
-                )
-            )[:top_k]
+    return [
+        _run_retrieval_snapshot(
+            query=query,
+            indexed_chunks=indexed_chunks,
+            embedding_provider=embedding_provider,
+            top_k=top_k,
         )
         for query in queries
     ]
-    return min(counts) if counts else 0
+
+
+def _run_retrieval_snapshot(
+    *,
+    query: str,
+    indexed_chunks: list[IndexedChunk],
+    embedding_provider: EmbeddingProvider,
+    top_k: int,
+) -> EvalRetrievalSnapshot:
+    candidate_results = search_index(
+        query=query,
+        indexed_chunks=indexed_chunks,
+        embedding_provider=embedding_provider,
+        top_k=max(top_k * 3, top_k),
+    )
+    filtered_results = filter_neighboring_results(candidate_results)
+    final_results = filtered_results[:top_k]
+    top_paths = [
+        result.indexed_chunk.metadata.document_relative_path for result in final_results
+    ]
+    top_titles = [result.indexed_chunk.metadata.source_title for result in final_results]
+    top_chunk_ids = [result.indexed_chunk.chunk_id for result in final_results]
+    top_scores = [round(result.score, 4) for result in final_results]
+    unique_document_count = len(
+        {result.indexed_chunk.document_id for result in final_results}
+    )
+    path_counts: dict[str, int] = {}
+    for path in top_paths:
+        path_counts[path] = path_counts.get(path, 0) + 1
+
+    return EvalRetrievalSnapshot(
+        query=query,
+        top_paths=top_paths,
+        top_titles=top_titles,
+        top_chunk_ids=top_chunk_ids,
+        top_scores=top_scores,
+        unique_document_count=unique_document_count,
+        top_path_repeat_count=max(path_counts.values(), default=0),
+        duplicate_like_count=max(len(candidate_results) - len(filtered_results), 0),
+        score_spread=(
+            round(top_scores[0] - top_scores[-1], 4)
+            if len(top_scores) >= 2
+            else 0.0
+        ),
+    )
 
 
 def _run_answer_mode(

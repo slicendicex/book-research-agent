@@ -34,7 +34,7 @@ Current retrieval stack is functional:
 - grounded contradiction/tension mode
 - grounded canon judgment mode
 - mode-aware answer-facing source depth defaults
-- minimal grounded eval health check
+- retrieval-observability eval snapshots and JSON reports
 - read-only curated morphology-aware concept-level corpus coverage report
 - CLI autoloads project-root `.env`
 - read-only corpus diagnostics commands
@@ -63,6 +63,7 @@ Current retrieval stack is functional:
 - Layer 16 — Pymorphy POS Filter Foundation
 - Layer 17 — Concept Curation / Domain Stoplist Foundation
 - Layer 18 — Chunking / Retrieval Upgrade Foundation
+- Layer 19 — Eval Observability Upgrade Foundation
 
 ---
 
@@ -80,6 +81,7 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli compare "auditor" "ol
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli contradict "auditor as protector" "auditor as destroyer"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli canon "auditor language"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval --json-out data/eval/runs/dev.json
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli corpus-report
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli stats
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli dedup-stats
@@ -130,6 +132,7 @@ Generation:
 - chunking is paragraph-aware but still heuristic
 - concept normalization is morphology-aware and deterministic
 - concept curation is currently a small manual stoplist
+- evals remain observability-oriented, not correctness benchmarks
 - domain awareness is currently a compact prompt lens, not a reasoning layer
 - no MCP / function-calling layer yet
 
@@ -137,10 +140,10 @@ Generation:
 
 ## Next target layer
 
-Layer 19 — Later expansion
+Layer 20 — Later expansion
 
 Goal:
-keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, grounded eval, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, and upgraded chunking/retrieval narrow and traceable.
+keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, retrieval-observability evals, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, and upgraded chunking/retrieval narrow and traceable.
 
 Focus:
 - future provider expansion

@@ -34,6 +34,7 @@ from book_research_agent.core.evaluation import (
     read_eval_cases_jsonl,
     run_eval_cases,
     summarize_eval_results,
+    write_eval_report_json,
 )
 from book_research_agent.core.hygiene import (
     DuplicateGroup,
@@ -280,6 +281,12 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=3,
         help="Maximum number of source references to use per eval query.",
+    )
+    eval_parser.add_argument(
+        "--json-out",
+        type=Path,
+        default=None,
+        help="Optional JSON output path for a structured eval report.",
     )
     eval_parser.set_defaults(handler=run_eval)
 
@@ -780,11 +787,27 @@ def run_eval(args: argparse.Namespace) -> int:
         print(f"mode: {result.mode}")
         print(f"retrieval_count: {result.retrieval_count}")
         print(f"answer_present: {'yes' if result.answer_present else 'no'}")
+        for snapshot in result.retrieval_snapshots:
+            print(f"query: {snapshot.query}")
+            print(f"top_paths: {snapshot.top_paths}")
+            print(f"top_chunk_ids: {snapshot.top_chunk_ids}")
+            print(f"top_scores: {snapshot.top_scores}")
+            print(f"unique_document_count: {snapshot.unique_document_count}")
+            print(f"top_path_repeat_count: {snapshot.top_path_repeat_count}")
+            print(f"duplicate_like_count: {snapshot.duplicate_like_count}")
+            print(f"score_spread: {snapshot.score_spread:.4f}")
 
     print("Summary:")
     print(f"PASS: {summary.pass_count}")
     print(f"WARN: {summary.warn_count}")
     print(f"FAIL: {summary.fail_count}")
+    if args.json_out is not None:
+        write_eval_report_json(
+            args.json_out,
+            results=results,
+            summary=summary,
+        )
+        print(f"json_out: {args.json_out}")
     return 1 if summary.fail_count else 0
 
 

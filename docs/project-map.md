@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, paragraph-aware chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a minimal grounded eval health check, and a read-only morphology-aware concept-level corpus coverage report with project concept curation.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, paragraph-aware chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a retrieval-observability eval upgrade, and a read-only morphology-aware concept-level corpus coverage report with project concept curation.
 
 ## Current structure
 
@@ -35,6 +35,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/16-pymorphy-pos-filter-foundation.md`
 - `docs/layers/17-concept-curation-domain-stoplist-foundation.md`
 - `docs/layers/18_chunking_retrieval_upgrade_foundation.md`
+- `docs/layers/19-eval-observability-upgrade-foundation.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
@@ -100,7 +101,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Read-only duplicate detection commands: `dedup-stats`, `find-duplicates`, `find-duplicate-chunks`
 - Dedicated `canon` CLI command for short cautious canon-oriented judgments with visible sources
 - Mode-aware answer-facing source depth defaults and stricter grounding prompt structure
-- Dedicated `eval` CLI command for minimal retrieval and answer-presence health checks
+- Dedicated `eval` CLI command for retrieval snapshots, lightweight observability metrics, and optional JSON report output
 - Dedicated `corpus-report` CLI command for pymorphy-backed normalized concepts, project-curated concept filtering, secondary concept lines, co-occurrences, and potential orphan notes
 
 ## What is still missing
@@ -110,4 +111,4 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 
 ## Next logical layer
 
-Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, grounded eval, curated morphology-aware concept-level corpus coverage, and upgraded chunking/retrieval foundation.
+Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, retrieval-observability evals, curated morphology-aware concept-level corpus coverage, and upgraded chunking/retrieval foundation.

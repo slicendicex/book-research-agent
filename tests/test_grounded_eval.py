@@ -97,13 +97,19 @@ class GroundedEvalTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp_dir:
             cases_path = Path(temp_dir) / "eval_cases.jsonl"
             cases_path.write_text(
-                '{"id": "answer_1", "mode": "answer", "query": "auditor"}\n',
+                (
+                    '{"id": "answer_1", "mode": "answer", '
+                    '"query": "auditor", "notes": "smoke"}\n'
+                ),
                 encoding="utf-8",
             )
 
             cases = read_eval_cases_jsonl(cases_path)
 
-        self.assertEqual(cases, [EvalCase(id="answer_1", mode="answer", query="auditor")])
+        self.assertEqual(
+            cases,
+            [EvalCase(id="answer_1", mode="answer", query="auditor", notes="smoke")],
+        )
 
     def test_run_eval_cases_reports_pass_warn_and_fail(self) -> None:
         warn_results = run_eval_cases(
@@ -131,6 +137,16 @@ class GroundedEvalTests(unittest.TestCase):
         self.assertEqual([result.status for result in results], ["WARN", "WARN", "FAIL"])
         self.assertEqual(results[0].message, "low retrieval")
         self.assertEqual(results[2].message, "no retrieval")
+        self.assertEqual(
+            results[0].retrieval_snapshots[0].top_paths,
+            ["notes/auditor.md", "notes/old-man.md"],
+        )
+        self.assertEqual(
+            results[0].retrieval_snapshots[0].top_chunk_ids,
+            ["doc-a:0", "doc-b:0"],
+        )
+        self.assertEqual(results[0].retrieval_snapshots[0].top_scores, [1.0, 0.0])
+        self.assertEqual(results[0].retrieval_snapshots[0].unique_document_count, 2)
         self.assertEqual(summary.warn_count, 2)
         self.assertEqual(summary.fail_count, 1)
 
@@ -153,6 +169,11 @@ class GroundedEvalTests(unittest.TestCase):
 
         self.assertEqual([result.status for result in results], ["PASS", "PASS"])
         self.assertTrue(all(result.answer_present for result in results))
+        self.assertEqual(len(results[0].retrieval_snapshots), 2)
+        self.assertEqual(
+            [snapshot.query for snapshot in results[0].retrieval_snapshots],
+            ["auditor", "old man"],
+        )
 
     def test_eval_cli_prints_results_and_summary(self) -> None:
         cases = [EvalCase(id="answer_1", mode="answer", query="auditor")]
@@ -160,6 +181,7 @@ class GroundedEvalTests(unittest.TestCase):
             cases_file=Path("eval_cases.jsonl"),
             index_file=Path("chunk_index.jsonl"),
             top_k=1,
+            json_out=None,
         )
 
         with patch(
@@ -184,8 +206,45 @@ class GroundedEvalTests(unittest.TestCase):
         self.assertIn("[answer_1] WARN (low retrieval)", text)
         self.assertIn("retrieval_count: 1", text)
         self.assertIn("answer_present: yes", text)
+        self.assertIn("top_paths: ['notes/auditor.md']", text)
+        self.assertIn("top_chunk_ids: ['doc-a:0']", text)
         self.assertIn("Summary:", text)
         self.assertIn("WARN: 1", text)
+
+    def test_eval_cli_can_write_json_report(self) -> None:
+        cases = [EvalCase(id="answer_1", mode="answer", query="auditor")]
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir) / "runs" / "eval.json"
+            args = argparse.Namespace(
+                cases_file=Path("eval_cases.jsonl"),
+                index_file=Path("chunk_index.jsonl"),
+                top_k=1,
+                json_out=output_path,
+            )
+
+            with patch(
+                "book_research_agent.cli.read_eval_cases_jsonl",
+                return_value=cases,
+            ), patch(
+                "book_research_agent.cli.read_indexed_chunks_jsonl",
+                return_value=make_indexed_chunks(),
+            ), patch(
+                "book_research_agent.cli.create_embedding_provider",
+                return_value=StubEmbeddingProvider(),
+            ), patch(
+                "book_research_agent.cli.create_generation_provider",
+                return_value=StubGenerationProvider(),
+            ):
+                exit_code = run_eval(args)
+
+            self.assertEqual(exit_code, 0)
+            self.assertTrue(output_path.exists())
+            payload = output_path.read_text(encoding="utf-8")
+            self.assertIn('"summary"', payload)
+            self.assertIn('"results"', payload)
+            self.assertIn('"top_paths"', payload)
+            self.assertIn('"top_chunk_ids"', payload)
 
 
 if __name__ == "__main__":
