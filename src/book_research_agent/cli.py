@@ -50,7 +50,11 @@ from book_research_agent.core.providers.factory import (
     create_embedding_provider,
     create_generation_provider,
 )
-from book_research_agent.core.retrieval import build_source_results, search_index
+from book_research_agent.core.retrieval import (
+    build_source_results,
+    retrieve_reranked_results,
+    search_index,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -580,17 +584,19 @@ def run_source(args: argparse.Namespace) -> int:
 
     indexed_chunks = read_indexed_chunks_jsonl(index_file)
     embedding_provider = create_embedding_provider(settings)
-    candidate_count = max(args.top_k * 3, args.top_k)
-    search_results = search_index(
+    generation_provider = create_generation_provider(settings)
+    search_results = retrieve_reranked_results(
         query=args.query,
         indexed_chunks=indexed_chunks,
         embedding_provider=embedding_provider,
-        top_k=candidate_count,
+        generation_provider=generation_provider,
+        top_k=args.top_k,
     )
     source_results = build_source_results(
         search_results,
         max_results=args.top_k,
         excerpt_length=args.excerpt_length,
+        neighbor_window=0,
     )
 
     print("book-research-agent source")

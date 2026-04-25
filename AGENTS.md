@@ -1,5 +1,14 @@
 # AGENTS.md
 
+## Agent behavior
+
+- Think before editing code.
+- State assumptions when a task is ambiguous.
+- Prefer surgical changes over broad rewrites.
+- Keep the simplest working design unless the active layer requires more.
+- Before changing stable layers, explain why the change is necessary.
+- Every implementation step should end in a concrete verification command.
+
 ## Project mission
 
 `book-research-agent` is a CLI-first external brain for a private book corpus.

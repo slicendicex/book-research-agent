@@ -1,4 +1,0 @@
-interface:
-  display_name: "Post Layer Review"
-  short_description: "Review completed layers before commit or push."
-  default_prompt: "Review the completed layer for scope, git hygiene, verification, docs/state hygiene, and commit readiness."

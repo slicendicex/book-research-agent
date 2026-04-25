@@ -37,6 +37,8 @@ class StubGenerationProvider:
 
     def generate_text(self, prompt: str) -> str:
         self.prompts.append(prompt)
+        if prompt.startswith("You select existing evidence chunks"):
+            return '["R1"]'
         return (
             "current_canonical_reading: The auditor language is tied to order.\n"
             "competing_variants: unclear from the provided sources.\n"
@@ -158,10 +160,11 @@ class CanonModeTests(unittest.TestCase):
                 ],
             ),
         )
-        self.assertEqual(len(generation_provider.prompts), 1)
-        self.assertIn("Canon query: auditor language", generation_provider.prompts[0])
-        self.assertIn("Prefer 'unclear' over overclaiming canon", generation_provider.prompts[0])
-        self.assertIn("Domain guidance:", generation_provider.prompts[0])
+        self.assertEqual(len(generation_provider.prompts), 2)
+        canon_prompt = generation_provider.prompts[-1]
+        self.assertIn("Canon query: auditor language", canon_prompt)
+        self.assertIn("Prefer 'unclear' over overclaiming canon", canon_prompt)
+        self.assertIn("Domain guidance:", canon_prompt)
 
     def test_canon_query_returns_unclear_when_no_sources_are_found(self) -> None:
         result = canon_query(

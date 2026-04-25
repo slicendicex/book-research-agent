@@ -5,7 +5,7 @@ from book_research_agent.core.answering.models import AnswerResult, SourceRefere
 from book_research_agent.core.answering.prompting import build_grounded_answer_prompt
 from book_research_agent.core.indexing.models import IndexedChunk
 from book_research_agent.core.providers.base import EmbeddingProvider, GenerationProvider
-from book_research_agent.core.retrieval import filter_neighboring_results, search_index
+from book_research_agent.core.retrieval import retrieve_reranked_results
 from book_research_agent.domain import DEFAULT_DOMAIN_PACK
 
 
@@ -20,14 +20,13 @@ def answer_query(
     if top_k <= 0:
         raise ValueError("top_k must be greater than zero")
 
-    candidate_count = max(top_k * 3, top_k)
-    candidate_results = search_index(
+    search_results = retrieve_reranked_results(
         query=query,
         indexed_chunks=indexed_chunks,
         embedding_provider=embedding_provider,
-        top_k=candidate_count,
+        generation_provider=generation_provider,
+        top_k=top_k,
     )
-    search_results = filter_neighboring_results(candidate_results)[:top_k]
 
     if not search_results:
         return AnswerResult(

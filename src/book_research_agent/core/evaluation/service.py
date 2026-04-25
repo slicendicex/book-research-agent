@@ -18,7 +18,11 @@ from book_research_agent.core.evaluation.models import (
 )
 from book_research_agent.core.indexing.models import IndexedChunk
 from book_research_agent.core.providers.base import EmbeddingProvider, GenerationProvider
-from book_research_agent.core.retrieval import filter_neighboring_results, search_index
+from book_research_agent.core.retrieval import (
+    filter_neighboring_results,
+    rerank_search_results,
+    search_index,
+)
 
 
 ANSWER_MODES = {"answer", "canon", "compare", "contradict"}
@@ -115,6 +119,7 @@ def _run_eval_case(
             case,
             indexed_chunks=indexed_chunks,
             embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
             top_k=top_k,
         )
     except ValueError as error:
@@ -189,6 +194,7 @@ def _retrieval_snapshots(
     *,
     indexed_chunks: list[IndexedChunk],
     embedding_provider: EmbeddingProvider,
+    generation_provider: GenerationProvider,
     top_k: int,
 ) -> list[EvalRetrievalSnapshot]:
     queries = _case_queries(case)
@@ -197,6 +203,7 @@ def _retrieval_snapshots(
             query=query,
             indexed_chunks=indexed_chunks,
             embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
             top_k=top_k,
         )
         for query in queries
@@ -208,6 +215,7 @@ def _run_retrieval_snapshot(
     query: str,
     indexed_chunks: list[IndexedChunk],
     embedding_provider: EmbeddingProvider,
+    generation_provider: GenerationProvider,
     top_k: int,
 ) -> EvalRetrievalSnapshot:
     candidate_results = search_index(
@@ -217,7 +225,12 @@ def _run_retrieval_snapshot(
         top_k=max(top_k * 3, top_k),
     )
     filtered_results = filter_neighboring_results(candidate_results)
-    final_results = filtered_results[:top_k]
+    final_results = rerank_search_results(
+        query=query,
+        candidates=filtered_results,
+        generation_provider=generation_provider,
+        top_k=top_k,
+    )
     top_paths = [
         result.indexed_chunk.metadata.document_relative_path for result in final_results
     ]
@@ -241,7 +254,7 @@ def _run_retrieval_snapshot(
         top_path_repeat_count=max(path_counts.values(), default=0),
         duplicate_like_count=max(len(candidate_results) - len(filtered_results), 0),
         score_spread=(
-            round(top_scores[0] - top_scores[-1], 4)
+            round(max(top_scores) - min(top_scores), 4)
             if len(top_scores) >= 2
             else 0.0
         ),

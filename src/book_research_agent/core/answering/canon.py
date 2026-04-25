@@ -27,6 +27,7 @@ def canon_query(
         query=query,
         indexed_chunks=indexed_chunks,
         embedding_provider=embedding_provider,
+        generation_provider=generation_provider,
         top_k=top_k,
     )
 

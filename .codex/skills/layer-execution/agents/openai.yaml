@@ -1,4 +1,0 @@
-interface:
-  display_name: "Layer Execution"
-  short_description: "Execute one project layer narrowly."
-  default_prompt: "Use the active layer doc plus AGENTS.md and CURRENT_STATE.md to implement one narrow project layer."

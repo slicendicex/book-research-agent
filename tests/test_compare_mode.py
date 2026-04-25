@@ -38,6 +38,8 @@ class StubGenerationProvider:
 
     def generate_text(self, prompt: str) -> str:
         self.prompts.append(prompt)
+        if prompt.startswith("You select existing evidence chunks"):
+            return '["R1"]'
         return "Both relate to order, but the old man preserves while the auditor judges."
 
 
@@ -176,10 +178,11 @@ class CompareModeTests(unittest.TestCase):
                 ],
             ),
         )
-        self.assertEqual(len(generation_provider.prompts), 1)
-        self.assertIn("Left query: auditor", generation_provider.prompts[0])
-        self.assertIn("Right query: old man", generation_provider.prompts[0])
-        self.assertIn("Domain guidance:", generation_provider.prompts[0])
+        self.assertEqual(len(generation_provider.prompts), 3)
+        compare_prompt = generation_provider.prompts[-1]
+        self.assertIn("Left query: auditor", compare_prompt)
+        self.assertIn("Right query: old man", compare_prompt)
+        self.assertIn("Domain guidance:", compare_prompt)
 
 
 if __name__ == "__main__":

@@ -30,12 +30,14 @@ def contradict_queries(
         query=left_query,
         indexed_chunks=indexed_chunks,
         embedding_provider=embedding_provider,
+        generation_provider=generation_provider,
         top_k=top_k,
     )
     right_results = _retrieve_compare_side(
         query=right_query,
         indexed_chunks=indexed_chunks,
         embedding_provider=embedding_provider,
+        generation_provider=generation_provider,
         top_k=top_k,
     )
 

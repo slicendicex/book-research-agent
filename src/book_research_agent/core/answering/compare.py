@@ -5,7 +5,7 @@ from book_research_agent.core.answering.models import CompareResult, SourceRefer
 from book_research_agent.core.answering.prompting import build_grounded_compare_prompt
 from book_research_agent.core.indexing.models import IndexedChunk
 from book_research_agent.core.providers.base import EmbeddingProvider, GenerationProvider
-from book_research_agent.core.retrieval import SearchResult, filter_neighboring_results, search_index
+from book_research_agent.core.retrieval import SearchResult, retrieve_reranked_results
 from book_research_agent.domain import DEFAULT_DOMAIN_PACK
 
 
@@ -25,12 +25,14 @@ def compare_queries(
         query=left_query,
         indexed_chunks=indexed_chunks,
         embedding_provider=embedding_provider,
+        generation_provider=generation_provider,
         top_k=top_k,
     )
     right_results = _retrieve_compare_side(
         query=right_query,
         indexed_chunks=indexed_chunks,
         embedding_provider=embedding_provider,
+        generation_provider=generation_provider,
         top_k=top_k,
     )
 
@@ -68,16 +70,16 @@ def _retrieve_compare_side(
     query: str,
     indexed_chunks: list[IndexedChunk],
     embedding_provider: EmbeddingProvider,
+    generation_provider: GenerationProvider,
     top_k: int,
 ) -> list[SearchResult]:
-    candidate_count = max(top_k * 3, top_k)
-    candidate_results = search_index(
+    return retrieve_reranked_results(
         query=query,
         indexed_chunks=indexed_chunks,
         embedding_provider=embedding_provider,
-        top_k=candidate_count,
+        generation_provider=generation_provider,
+        top_k=top_k,
     )
-    return filter_neighboring_results(candidate_results)[:top_k]
 
 
 def _source_references(results: list[SearchResult]) -> list[SourceReference]:

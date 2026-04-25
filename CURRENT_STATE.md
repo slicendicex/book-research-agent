@@ -28,6 +28,7 @@ Current retrieval stack is functional:
 - OpenAI embeddings
 - file-based local semantic index
 - top-k semantic search with lightweight diversity filtering
+- prompt-based reranking for evidence-consuming modes
 - source-facing retrieval display mode
 - canon-aware answer prompt lens
 - grounded compare mode
@@ -64,6 +65,7 @@ Current retrieval stack is functional:
 - Layer 17 — Concept Curation / Domain Stoplist Foundation
 - Layer 18 — Chunking / Retrieval Upgrade Foundation
 - Layer 19 — Eval Observability Upgrade Foundation
+- Layer 20 — Prompt-Based Reranking Foundation
 
 ---
 
@@ -124,6 +126,7 @@ Generation:
 - provider: `openai`
 - model: `gpt-4.1-mini`
 - answer mode: retrieval-grounded single-shot generation
+- reranking: prompt-based candidate id selection through the existing generation path
 
 ---
 
@@ -133,6 +136,7 @@ Generation:
 - concept normalization is morphology-aware and deterministic
 - concept curation is currently a small manual stoplist
 - evals remain observability-oriented, not correctness benchmarks
+- prompt-based reranking falls back to semantic order when model output is unusable
 - domain awareness is currently a compact prompt lens, not a reasoning layer
 - no MCP / function-calling layer yet
 
@@ -140,10 +144,10 @@ Generation:
 
 ## Next target layer
 
-Layer 20 — Later expansion
+Layer 21 — Later expansion
 
 Goal:
-keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, retrieval-observability evals, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, and upgraded chunking/retrieval narrow and traceable.
+keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, retrieval-observability evals, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, upgraded chunking/retrieval, and prompt-based reranking narrow and traceable.
 
 Focus:
 - future provider expansion

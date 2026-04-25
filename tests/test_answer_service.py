@@ -30,6 +30,8 @@ class StubGenerationProvider:
 
     def generate_text(self, prompt: str) -> str:
         self.prompts.append(prompt)
+        if prompt.startswith("You select existing evidence chunks"):
+            return '["R1"]'
         return "The auditor represents oversight and accountability."
 
 
@@ -103,14 +105,16 @@ class AnswerServiceTests(unittest.TestCase):
                 ],
             ),
         )
-        self.assertEqual(len(generation_provider.prompts), 1)
-        self.assertIn("Question: auditor question", generation_provider.prompts[0])
-        self.assertIn("title: Auditor Notes", generation_provider.prompts[0])
-        self.assertIn("Prefer specific source-backed details", generation_provider.prompts[0])
-        self.assertIn("limits: <uncertainty or missing evidence, or none>", generation_provider.prompts[0])
-        self.assertIn("Domain guidance:", generation_provider.prompts[0])
-        self.assertIn("Auditor", generation_provider.prompts[0])
-        self.assertIn("Do not invent facts, citations, or canon.", generation_provider.prompts[0])
+        self.assertEqual(len(generation_provider.prompts), 2)
+        self.assertIn("Return only a JSON array of candidate ids", generation_provider.prompts[0])
+        answer_prompt = generation_provider.prompts[-1]
+        self.assertIn("Question: auditor question", answer_prompt)
+        self.assertIn("title: Auditor Notes", answer_prompt)
+        self.assertIn("Prefer specific source-backed details", answer_prompt)
+        self.assertIn("limits: <uncertainty or missing evidence, or none>", answer_prompt)
+        self.assertIn("Domain guidance:", answer_prompt)
+        self.assertIn("Auditor", answer_prompt)
+        self.assertIn("Do not invent facts, citations, or canon.", answer_prompt)
 
 
 if __name__ == "__main__":

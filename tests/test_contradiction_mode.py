@@ -38,6 +38,8 @@ class StubGenerationProvider:
 
     def generate_text(self, prompt: str) -> str:
         self.prompts.append(prompt)
+        if prompt.startswith("You select existing evidence chunks"):
+            return '["R1"]'
         return (
             "verdict: in tension\n"
             "explanation: The sources support both protective intent and destructive effects."
@@ -181,10 +183,11 @@ class ContradictionModeTests(unittest.TestCase):
                 ],
             ),
         )
-        self.assertEqual(len(generation_provider.prompts), 1)
-        self.assertIn("Left claim/query: auditor as protector", generation_provider.prompts[0])
-        self.assertIn("Right claim/query: auditor as destroyer", generation_provider.prompts[0])
-        self.assertIn("prefer 'in tension' or 'unclear'", generation_provider.prompts[0])
+        self.assertEqual(len(generation_provider.prompts), 3)
+        contradiction_prompt = generation_provider.prompts[-1]
+        self.assertIn("Left claim/query: auditor as protector", contradiction_prompt)
+        self.assertIn("Right claim/query: auditor as destroyer", contradiction_prompt)
+        self.assertIn("prefer 'in tension' or 'unclear'", contradiction_prompt)
 
 
 if __name__ == "__main__":
