@@ -23,3 +23,5 @@ tmux-server-*.log
 *.Zone.Identifier
 repo-cart.md
 repo-cart.json
+
+.tmp/
