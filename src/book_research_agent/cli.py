@@ -1,4 +1,5 @@
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -31,9 +32,16 @@ from book_research_agent.core.diagnostics import (
     get_indexed_chunk_by_id,
 )
 from book_research_agent.core.evaluation import (
+    build_default_eval_run_path,
+    build_eval_run_diff,
+    get_latest_eval_run_paths,
+    prune_auto_saved_eval_runs,
     read_eval_cases_jsonl,
+    read_eval_report_json,
+    resolve_eval_run_path,
     run_eval_cases,
     summarize_eval_results,
+    write_eval_diff_json,
     write_eval_report_json,
 )
 from book_research_agent.core.hygiene import (
@@ -293,6 +301,33 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional JSON output path for a structured eval report.",
     )
     eval_parser.set_defaults(handler=run_eval)
+
+    eval_compare_parser = subparsers.add_parser(
+        "eval-compare",
+        help="Compare two saved eval run files.",
+    )
+    eval_compare_parser.add_argument(
+        "run_a",
+        nargs="?",
+        help="First eval run file. Short names resolve inside data/eval/runs/.",
+    )
+    eval_compare_parser.add_argument(
+        "run_b",
+        nargs="?",
+        help="Second eval run file. Short names resolve inside data/eval/runs/.",
+    )
+    eval_compare_parser.add_argument(
+        "--latest",
+        action="store_true",
+        help="Compare the two newest saved eval run files in data/eval/runs/.",
+    )
+    eval_compare_parser.add_argument(
+        "--json-out",
+        type=Path,
+        default=None,
+        help="Optional JSON output path for a structured diff report.",
+    )
+    eval_compare_parser.set_defaults(handler=run_eval_compare)
 
     stats_parser = subparsers.add_parser(
         "stats",
@@ -768,6 +803,7 @@ def run_eval(args: argparse.Namespace) -> int:
     settings = load_settings()
     cases_file = args.cases_file or (settings.data_dir / "eval" / "eval_cases.jsonl")
     index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+    runs_dir = settings.data_dir / "eval" / "runs"
 
     cases = read_eval_cases_jsonl(cases_file)
     indexed_chunks = read_indexed_chunks_jsonl(index_file)
@@ -807,14 +843,109 @@ def run_eval(args: argparse.Namespace) -> int:
     print(f"PASS: {summary.pass_count}")
     print(f"WARN: {summary.warn_count}")
     print(f"FAIL: {summary.fail_count}")
-    if args.json_out is not None:
-        write_eval_report_json(
-            args.json_out,
-            results=results,
-            summary=summary,
-        )
-        print(f"json_out: {args.json_out}")
+    output_path = args.json_out
+    auto_saved = output_path is None
+    if output_path is None:
+        output_path = build_default_eval_run_path(runs_dir)
+    write_eval_report_json(
+        output_path,
+        results=results,
+        summary=summary,
+    )
+    print(f"saved_run: {output_path}")
+    if auto_saved:
+        prune_auto_saved_eval_runs(runs_dir)
     return 1 if summary.fail_count else 0
+
+
+def run_eval_compare(args: argparse.Namespace) -> int:
+    settings = load_settings()
+    runs_dir = settings.data_dir / "eval" / "runs"
+
+    if args.latest:
+        if args.run_a is not None or args.run_b is not None:
+            print("--latest does not accept run file arguments", file=sys.stderr)
+            return 1
+        try:
+            run_a_path, run_b_path = get_latest_eval_run_paths(runs_dir)
+        except (FileNotFoundError, ValueError) as error:
+            print(str(error), file=sys.stderr)
+            return 1
+    else:
+        if args.run_a is None or args.run_b is None:
+            print("eval-compare requires two run files or --latest", file=sys.stderr)
+            return 1
+        try:
+            run_a_path = resolve_eval_run_path(args.run_a, runs_dir=runs_dir)
+            run_b_path = resolve_eval_run_path(args.run_b, runs_dir=runs_dir)
+        except FileNotFoundError as error:
+            print(str(error), file=sys.stderr)
+            return 1
+
+    try:
+        before_report = read_eval_report_json(run_a_path)
+        after_report = read_eval_report_json(run_b_path)
+    except (FileNotFoundError, ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
+        print(str(error), file=sys.stderr)
+        return 1
+
+    diff = build_eval_run_diff(
+        before_report,
+        after_report,
+        before_path=run_a_path,
+        after_path=run_b_path,
+    )
+
+    print("book-research-agent eval-compare")
+    print(f"before_run: {run_a_path}")
+    print(f"after_run: {run_b_path}")
+    print("summary_delta:")
+    print(f"PASS: {diff.pass_delta:+d}")
+    print(f"WARN: {diff.warn_delta:+d}")
+    print(f"FAIL: {diff.fail_delta:+d}")
+    print(f"changed_cases: {len(diff.changed_cases)}")
+
+    for case_diff in diff.changed_cases:
+        print("---")
+        print(f"case_id: {case_diff.case_id}")
+        print(f"mode: {case_diff.mode}")
+        if case_diff.status_before != case_diff.status_after:
+            print(f"status: {case_diff.status_before} -> {case_diff.status_after}")
+        if case_diff.retrieval_count_before != case_diff.retrieval_count_after:
+            print(
+                "retrieval_count: "
+                f"{case_diff.retrieval_count_before} -> {case_diff.retrieval_count_after}"
+            )
+        if case_diff.top_paths_before != case_diff.top_paths_after:
+            print(f"top_paths_before: {case_diff.top_paths_before}")
+            print(f"top_paths_after: {case_diff.top_paths_after}")
+        if case_diff.top_scores_before != case_diff.top_scores_after:
+            print(f"top_scores_before: {case_diff.top_scores_before}")
+            print(f"top_scores_after: {case_diff.top_scores_after}")
+        if (
+            case_diff.unique_document_count_before
+            != case_diff.unique_document_count_after
+        ):
+            print(
+                "unique_document_count: "
+                f"{case_diff.unique_document_count_before} -> "
+                f"{case_diff.unique_document_count_after}"
+            )
+        if (
+            case_diff.duplicate_like_count_before
+            != case_diff.duplicate_like_count_after
+        ):
+            print(
+                "duplicate_like_count: "
+                f"{case_diff.duplicate_like_count_before} -> "
+                f"{case_diff.duplicate_like_count_after}"
+            )
+
+    if args.json_out is not None:
+        write_eval_diff_json(args.json_out, diff=diff)
+        print(f"saved_diff: {args.json_out}")
+
+    return 0
 
 
 def run_stats(args: argparse.Namespace) -> int:

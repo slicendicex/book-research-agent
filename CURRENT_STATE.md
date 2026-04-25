@@ -35,7 +35,7 @@ Current retrieval stack is functional:
 - grounded contradiction/tension mode
 - grounded canon judgment mode
 - mode-aware answer-facing source depth defaults
-- retrieval-observability eval snapshots and JSON reports
+- retrieval-observability eval snapshots, auto-saved run history, and CLI diffing
 - read-only curated morphology-aware concept-level corpus coverage report
 - CLI autoloads project-root `.env`
 - read-only corpus diagnostics commands
@@ -66,6 +66,7 @@ Current retrieval stack is functional:
 - Layer 18 — Chunking / Retrieval Upgrade Foundation
 - Layer 19 — Eval Observability Upgrade Foundation
 - Layer 20 — Prompt-Based Reranking Foundation
+- Layer 21 — Eval Run History and Diff Foundation
 
 ---
 
@@ -84,6 +85,9 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli contradict "auditor a
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli canon "auditor language"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval --json-out data/eval/runs/dev.json
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval-compare --latest
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval --json-out data/eval/runs/manual.json
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval-compare --latest --json-out data/eval/runs/latest-diff.json
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli corpus-report
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli stats
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli dedup-stats
@@ -111,8 +115,11 @@ Processed local artifacts:
 Local index artifacts:
 - `data/index/chunk_index.jsonl`
 
+Local eval run artifacts:
+- `data/eval/runs/`
+
 Important:
-raw corpus, processed artifacts, and index artifacts must remain outside git except for `.gitkeep` placeholders.
+raw corpus, processed artifacts, index artifacts, and saved eval run files must remain outside git except for `.gitkeep` placeholders.
 
 ---
 
@@ -136,6 +143,7 @@ Generation:
 - concept normalization is morphology-aware and deterministic
 - concept curation is currently a small manual stoplist
 - evals remain observability-oriented, not correctness benchmarks
+- eval run retention prunes only auto-saved timestamped files
 - prompt-based reranking falls back to semantic order when model output is unusable
 - domain awareness is currently a compact prompt lens, not a reasoning layer
 - no MCP / function-calling layer yet
@@ -144,10 +152,10 @@ Generation:
 
 ## Next target layer
 
-Layer 21 — Later expansion
+Layer 22 — Later expansion
 
 Goal:
-keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, retrieval-observability evals, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, upgraded chunking/retrieval, and prompt-based reranking narrow and traceable.
+keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, retrieval-observability evals with saved run history/diffing, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, upgraded chunking/retrieval, and prompt-based reranking narrow and traceable.
 
 Focus:
 - future provider expansion

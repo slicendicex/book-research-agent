@@ -2,16 +2,24 @@ from __future__ import annotations
 
 import argparse
 import io
+import json
 import tempfile
 import unittest
 from contextlib import redirect_stdout
+from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
-from book_research_agent.cli import run_eval
+from book_research_agent.cli import run_eval, run_eval_compare
 from book_research_agent.core.chunks.models import ChunkMetadata
 from book_research_agent.core.evaluation import (
     EvalCase,
+    build_default_eval_run_path,
+    build_eval_run_diff,
+    get_latest_eval_run_paths,
+    prune_auto_saved_eval_runs,
+    read_eval_report_json,
     read_eval_cases_jsonl,
     run_eval_cases,
     summarize_eval_results,
@@ -177,29 +185,38 @@ class GroundedEvalTests(unittest.TestCase):
 
     def test_eval_cli_prints_results_and_summary(self) -> None:
         cases = [EvalCase(id="answer_1", mode="answer", query="auditor")]
-        args = argparse.Namespace(
-            cases_file=Path("eval_cases.jsonl"),
-            index_file=Path("chunk_index.jsonl"),
-            top_k=1,
-            json_out=None,
-        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            data_dir = Path(temp_dir) / "data"
+            settings = SimpleNamespace(
+                data_dir=data_dir,
+                data_index_dir=data_dir / "index",
+            )
+            args = argparse.Namespace(
+                cases_file=Path("eval_cases.jsonl"),
+                index_file=Path("chunk_index.jsonl"),
+                top_k=1,
+                json_out=None,
+            )
 
-        with patch(
-            "book_research_agent.cli.read_eval_cases_jsonl",
-            return_value=cases,
-        ), patch(
-            "book_research_agent.cli.read_indexed_chunks_jsonl",
-            return_value=make_indexed_chunks(),
-        ), patch(
-            "book_research_agent.cli.create_embedding_provider",
-            return_value=StubEmbeddingProvider(),
-        ), patch(
-            "book_research_agent.cli.create_generation_provider",
-            return_value=StubGenerationProvider(),
-        ):
-            output = io.StringIO()
-            with redirect_stdout(output):
-                exit_code = run_eval(args)
+            with patch(
+                "book_research_agent.cli.load_settings",
+                return_value=settings,
+            ), patch(
+                "book_research_agent.cli.read_eval_cases_jsonl",
+                return_value=cases,
+            ), patch(
+                "book_research_agent.cli.read_indexed_chunks_jsonl",
+                return_value=make_indexed_chunks(),
+            ), patch(
+                "book_research_agent.cli.create_embedding_provider",
+                return_value=StubEmbeddingProvider(),
+            ), patch(
+                "book_research_agent.cli.create_generation_provider",
+                return_value=StubGenerationProvider(),
+            ):
+                output = io.StringIO()
+                with redirect_stdout(output):
+                    exit_code = run_eval(args)
 
         text = output.getvalue()
         self.assertEqual(exit_code, 0)
@@ -208,6 +225,7 @@ class GroundedEvalTests(unittest.TestCase):
         self.assertIn("answer_present: yes", text)
         self.assertIn("top_paths: ['notes/auditor.md']", text)
         self.assertIn("top_chunk_ids: ['doc-a:0']", text)
+        self.assertIn("saved_run:", text)
         self.assertIn("Summary:", text)
         self.assertIn("WARN: 1", text)
 
@@ -222,8 +240,15 @@ class GroundedEvalTests(unittest.TestCase):
                 top_k=1,
                 json_out=output_path,
             )
+            settings = SimpleNamespace(
+                data_dir=Path(temp_dir) / "data",
+                data_index_dir=(Path(temp_dir) / "data" / "index"),
+            )
 
             with patch(
+                "book_research_agent.cli.load_settings",
+                return_value=settings,
+            ), patch(
                 "book_research_agent.cli.read_eval_cases_jsonl",
                 return_value=cases,
             ), patch(
@@ -245,6 +270,170 @@ class GroundedEvalTests(unittest.TestCase):
             self.assertIn('"results"', payload)
             self.assertIn('"top_paths"', payload)
             self.assertIn('"top_chunk_ids"', payload)
+
+    def test_eval_helpers_prune_only_auto_saved_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            runs_dir = Path(temp_dir)
+            auto_one = runs_dir / "2026-04-25T13-20-10_eval.json"
+            auto_two = runs_dir / "2026-04-25T13-20-11_eval.json"
+            auto_three = runs_dir / "2026-04-25T13-20-12_eval.json"
+            manual = runs_dir / "manual.json"
+
+            for path in [auto_one, auto_two, auto_three, manual]:
+                path.write_text("{}", encoding="utf-8")
+
+            removed = prune_auto_saved_eval_runs(runs_dir, keep_last=2)
+
+            self.assertEqual(removed, [auto_one])
+            self.assertFalse(auto_one.exists())
+            self.assertTrue(auto_two.exists())
+            self.assertTrue(auto_three.exists())
+            self.assertTrue(manual.exists())
+
+    def test_build_default_eval_run_path_avoids_collision(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            runs_dir = Path(temp_dir)
+            first = build_default_eval_run_path(
+                runs_dir,
+                now=datetime(2026, 4, 25, 13, 20, 10),
+            )
+            first.write_text("{}", encoding="utf-8")
+            second = build_default_eval_run_path(
+                runs_dir,
+                now=datetime(2026, 4, 25, 13, 20, 10),
+            )
+
+            self.assertEqual(first.name, "2026-04-25T13-20-10_eval.json")
+            self.assertEqual(second.name, "2026-04-25T13-20-11_eval.json")
+
+    def test_eval_compare_latest_prints_diff_and_writes_json(self) -> None:
+        cases = [EvalCase(id="answer_1", mode="answer", query="auditor")]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            data_dir = Path(temp_dir) / "data"
+            runs_dir = data_dir / "eval" / "runs"
+            settings = SimpleNamespace(
+                data_dir=data_dir,
+                data_index_dir=data_dir / "index",
+            )
+            eval_args = argparse.Namespace(
+                cases_file=Path("eval_cases.jsonl"),
+                index_file=Path("chunk_index.jsonl"),
+                top_k=1,
+                json_out=None,
+            )
+            compare_args = argparse.Namespace(
+                run_a=None,
+                run_b=None,
+                latest=True,
+                json_out=runs_dir / "latest-diff.json",
+            )
+
+            with patch(
+                "book_research_agent.cli.load_settings",
+                return_value=settings,
+            ), patch(
+                "book_research_agent.cli.read_eval_cases_jsonl",
+                return_value=cases,
+            ), patch(
+                "book_research_agent.cli.read_indexed_chunks_jsonl",
+                return_value=make_indexed_chunks(),
+            ), patch(
+                "book_research_agent.cli.create_embedding_provider",
+                return_value=StubEmbeddingProvider(),
+            ), patch(
+                "book_research_agent.cli.create_generation_provider",
+                return_value=StubGenerationProvider(),
+            ):
+                output = io.StringIO()
+                with redirect_stdout(output):
+                    self.assertEqual(run_eval(eval_args), 0)
+                    self.assertEqual(run_eval(eval_args), 0)
+                    compare_exit_code = run_eval_compare(compare_args)
+
+            text = output.getvalue()
+            self.assertEqual(compare_exit_code, 0)
+            self.assertIn("book-research-agent eval-compare", text)
+            self.assertIn("summary_delta:", text)
+            self.assertIn("saved_diff:", text)
+            self.assertTrue((runs_dir / "latest-diff.json").exists())
+
+    def test_eval_run_diff_marks_changed_cases(self) -> None:
+        before_report = read_eval_report_json(_write_report_fixture(status="WARN"))
+        after_report = read_eval_report_json(_write_report_fixture(status="PASS"))
+
+        diff = build_eval_run_diff(
+            before_report,
+            after_report,
+            before_path=Path("before.json"),
+            after_path=Path("after.json"),
+        )
+
+        self.assertEqual(diff.pass_delta, 1)
+        self.assertEqual(diff.warn_delta, -1)
+        self.assertEqual(len(diff.changed_cases), 1)
+        self.assertEqual(diff.changed_cases[0].status_before, "WARN")
+        self.assertEqual(diff.changed_cases[0].status_after, "PASS")
+
+    def test_get_latest_eval_run_paths_ignores_non_report_json(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            runs_dir = Path(temp_dir)
+            first = runs_dir / "2026-04-25T13-20-10_eval.json"
+            second = runs_dir / "2026-04-25T13-20-11_eval.json"
+            diff_file = runs_dir / "latest-diff.json"
+
+            _write_report_fixture(path=first)
+            _write_report_fixture(path=second)
+            diff_file.write_text('{"summary_delta": {"pass_delta": 1}}', encoding="utf-8")
+
+            older, newer = get_latest_eval_run_paths(runs_dir)
+
+            self.assertEqual(older, first)
+            self.assertEqual(newer, second)
+
+
+def _write_report_fixture(*, status: str = "WARN", path: Path | None = None) -> Path:
+    if path is None:
+        with tempfile.NamedTemporaryFile("w+", suffix=".json", delete=False) as temp_file:
+            report_path = Path(temp_file.name)
+    else:
+        report_path = path
+
+    report_payload = {
+        "summary": {
+            "pass_count": 1 if status == "PASS" else 0,
+            "warn_count": 1 if status == "WARN" else 0,
+            "fail_count": 0,
+        },
+        "results": [
+            {
+                "case_id": "answer_1",
+                "mode": "answer",
+                "status": status,
+                "retrieval_count": 1,
+                "answer_present": True,
+                "message": "low retrieval" if status == "WARN" else "",
+                "retrieval_snapshots": [
+                    {
+                        "query": "auditor",
+                        "top_paths": ["notes/auditor.md"],
+                        "top_titles": ["Auditor Notes"],
+                        "top_chunk_ids": ["doc-a:0"],
+                        "top_scores": [1.0],
+                        "unique_document_count": 1,
+                        "top_path_repeat_count": 1,
+                        "duplicate_like_count": 0,
+                        "score_spread": 0.0,
+                    }
+                ],
+            }
+        ],
+    }
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
+        json.dumps(report_payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return report_path
 
 
 if __name__ == "__main__":

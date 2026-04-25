@@ -1,18 +1,45 @@
-from .models import EvalCase, EvalResult, EvalRetrievalSnapshot, EvalSummary
+from .models import (
+    EvalCase,
+    EvalCaseDiff,
+    EvalResult,
+    EvalRetrievalSnapshot,
+    EvalRunDiff,
+    EvalRunReport,
+    EvalSummary,
+)
 from .service import (
+    DEFAULT_EVAL_RUN_HISTORY_LIMIT,
+    build_default_eval_run_path,
+    build_eval_run_diff,
+    get_latest_eval_run_paths,
     read_eval_cases_jsonl,
+    read_eval_report_json,
+    resolve_eval_run_path,
     run_eval_cases,
     summarize_eval_results,
+    prune_auto_saved_eval_runs,
+    write_eval_diff_json,
     write_eval_report_json,
 )
 
 __all__ = [
     "EvalCase",
+    "EvalCaseDiff",
     "EvalResult",
     "EvalRetrievalSnapshot",
+    "EvalRunDiff",
+    "EvalRunReport",
     "EvalSummary",
+    "DEFAULT_EVAL_RUN_HISTORY_LIMIT",
+    "build_default_eval_run_path",
+    "build_eval_run_diff",
+    "get_latest_eval_run_paths",
+    "prune_auto_saved_eval_runs",
     "read_eval_cases_jsonl",
+    "read_eval_report_json",
+    "resolve_eval_run_path",
     "run_eval_cases",
     "summarize_eval_results",
+    "write_eval_diff_json",
     "write_eval_report_json",
 ]
