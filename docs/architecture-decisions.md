@@ -102,3 +102,16 @@ read-only reporting instead of graph-building.
 Implication:
 The system gives up a more ambitious exploratory view, but avoids adding a
 layer that would look more meaningful than it really is.
+
+## 7. Optional RAGAS layer postponed
+
+RAGAS was considered as an optional faithfulness probe on top of saved eval runs.
+
+Decision:
+Do not add it yet.
+
+Reason:
+The current eval system is intentionally observability-oriented and already supports retrieval inspection. RAGAS would add an LLM-as-judge layer and extra dependencies before the project clearly needs them.
+
+Implication:
+RAGAS remains a later optional diagnostic layer, not a replacement for existing evals.

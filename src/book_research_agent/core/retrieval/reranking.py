@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from dataclasses import dataclass
 
 from book_research_agent.core.indexing.models import IndexedChunk
 from book_research_agent.core.providers.base import EmbeddingProvider, GenerationProvider
@@ -15,6 +16,12 @@ DEFAULT_RERANK_CANDIDATE_MULTIPLIER = 3
 _CANDIDATE_ID_PATTERN = re.compile(r"R\d+")
 
 
+@dataclass(frozen=True)
+class RerankedRetrievalBundle:
+    retrieval_candidates: list[SearchResult]
+    final_evidence: list[SearchResult]
+
+
 def retrieve_reranked_results(
     *,
     query: str,
@@ -23,6 +30,23 @@ def retrieve_reranked_results(
     generation_provider: GenerationProvider,
     top_k: int,
 ) -> list[SearchResult]:
+    return retrieve_reranked_bundle(
+        query=query,
+        indexed_chunks=indexed_chunks,
+        embedding_provider=embedding_provider,
+        generation_provider=generation_provider,
+        top_k=top_k,
+    ).final_evidence
+
+
+def retrieve_reranked_bundle(
+    *,
+    query: str,
+    indexed_chunks: list[IndexedChunk],
+    embedding_provider: EmbeddingProvider,
+    generation_provider: GenerationProvider,
+    top_k: int,
+) -> RerankedRetrievalBundle:
     if top_k <= 0:
         raise ValueError("top_k must be greater than zero")
 
@@ -33,11 +57,14 @@ def retrieve_reranked_results(
         top_k=max(top_k * DEFAULT_RERANK_CANDIDATE_MULTIPLIER, top_k),
     )
     filtered_results = filter_neighboring_results(candidate_results)
-    return rerank_search_results(
-        query=query,
-        candidates=filtered_results,
-        generation_provider=generation_provider,
-        top_k=top_k,
+    return RerankedRetrievalBundle(
+        retrieval_candidates=filtered_results,
+        final_evidence=rerank_search_results(
+            query=query,
+            candidates=filtered_results,
+            generation_provider=generation_provider,
+            top_k=top_k,
+        ),
     )
 
 

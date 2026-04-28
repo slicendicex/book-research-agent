@@ -17,7 +17,7 @@ raw files
 -> documents.jsonl
 -> chunk
 -> chunks.jsonl
--> embed
+-> index
 -> chunk_index.jsonl
 -> search / source / answer / compare / contradict / canon
 
@@ -36,6 +36,7 @@ Current retrieval stack is functional:
 - grounded canon judgment mode
 - mode-aware answer-facing source depth defaults
 - retrieval-observability eval snapshots, auto-saved run history, and CLI diffing
+- optional local trace artifacts for answer-facing modes
 - read-only curated morphology-aware concept-level corpus coverage report
 - CLI autoloads project-root `.env`
 - read-only corpus diagnostics commands
@@ -67,6 +68,7 @@ Current retrieval stack is functional:
 - Layer 19 — Eval Observability Upgrade Foundation
 - Layer 20 — Prompt-Based Reranking Foundation
 - Layer 21 — Eval Run History and Diff Foundation
+- Layer 22 — RAG Trace Artifact Foundation
 
 ---
 
@@ -83,6 +85,10 @@ PYTHONPATH=src .venv/bin/python -m book_research_agent.cli answer "What does the
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli compare "auditor" "old man"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli contradict "auditor as protector" "auditor as destroyer"
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli canon "auditor language"
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli answer "What does the auditor represent?" --save-trace
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli canon "auditor language" --save-trace
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli compare "auditor" "old man" --save-trace
+PYTHONPATH=src .venv/bin/python -m book_research_agent.cli contradict "auditor as protector" "auditor as destroyer" --save-trace
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval --json-out data/eval/runs/dev.json
 PYTHONPATH=src .venv/bin/python -m book_research_agent.cli eval-compare --latest
@@ -118,8 +124,11 @@ Local index artifacts:
 Local eval run artifacts:
 - `data/eval/runs/`
 
+Local trace artifacts:
+- `data/traces/`
+
 Important:
-raw corpus, processed artifacts, index artifacts, and saved eval run files must remain outside git except for `.gitkeep` placeholders.
+raw corpus, processed artifacts, index artifacts, saved eval run files, and saved trace artifacts must remain outside git except for `.gitkeep` placeholders.
 
 ---
 
@@ -145,6 +154,7 @@ Generation:
 - evals remain observability-oriented, not correctness benchmarks
 - eval run retention prunes only auto-saved timestamped files
 - prompt-based reranking falls back to semantic order when model output is unusable
+- trace artifacts are opt-in and store compact evidence blocks rather than full documents
 - domain awareness is currently a compact prompt lens, not a reasoning layer
 - no MCP / function-calling layer yet
 
@@ -152,10 +162,10 @@ Generation:
 
 ## Next target layer
 
-Layer 22 — Later expansion
+Layer 23 — Later expansion
 
 Goal:
-keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, retrieval-observability evals with saved run history/diffing, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, upgraded chunking/retrieval, and prompt-based reranking narrow and traceable.
+keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, retrieval-observability evals with saved run history/diffing, optional local trace artifacts, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, upgraded chunking/retrieval, and prompt-based reranking narrow and traceable.
 
 Focus:
 - future provider expansion

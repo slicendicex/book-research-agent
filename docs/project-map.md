@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, paragraph-aware chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a retrieval-observability eval upgrade with run history/diff support, a read-only morphology-aware concept-level corpus coverage report with project concept curation, and prompt-based reranking for evidence-consuming modes.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, paragraph-aware chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a retrieval-observability eval upgrade with run history/diff support, a read-only morphology-aware concept-level corpus coverage report with project concept curation, prompt-based reranking for evidence-consuming modes, and optional local trace artifacts for answer-facing runs.
 
 ## Current structure
 
@@ -16,6 +16,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `data/config/concept_stoplist.txt`
 - `data/eval/eval_cases.jsonl`
 - `data/eval/runs/.gitkeep`
+- `data/traces/.gitkeep`
 - `docs/layers/`
 - `docs/layers/00-ai-boundary-config.md`
 - `docs/layers/01-document-ingestion.md`
@@ -39,6 +40,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/19-eval-observability-upgrade-foundation.md`
 - `docs/layers/20-prompt-based-reranking-foundation.md`
 - `docs/layers/21-eval-run-history-and-diff-foundation.md`
+- `docs/layers/22-rag-trace-artifact-foundation.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
@@ -64,6 +66,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `src/book_research_agent/core/retrieval/`
 - `src/book_research_agent/core/retrieval/reranking.py`
 - `src/book_research_agent/core/retrieval/source.py`
+- `src/book_research_agent/core/tracing/`
 - `src/book_research_agent/domain/`
 - `src/book_research_agent/domain/canon.py`
 - `src/book_research_agent/corpus/`
@@ -109,6 +112,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Dedicated `eval` CLI command with automatic run saving, retrieval snapshots, lightweight observability metrics, and optional JSON report output
 - Dedicated `eval-compare` CLI command for comparing saved eval run files or the two latest runs
 - Dedicated `corpus-report` CLI command for pymorphy-backed normalized concepts, project-curated concept filtering, secondary concept lines, co-occurrences, and potential orphan notes
+- Optional trace artifact saving for `answer`, `canon`, `compare`, and `contradict`, with compact evidence blocks and generated output capture
 
 ## What is still missing
 
@@ -117,4 +121,4 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 
 ## Next logical layer
 
-Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, retrieval-observability evals with saved run history/diffing, curated morphology-aware concept-level corpus coverage, upgraded chunking/retrieval foundation, and prompt-based reranking foundation.
+Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, retrieval-observability evals with saved run history/diffing, curated morphology-aware concept-level corpus coverage, upgraded chunking/retrieval foundation, prompt-based reranking foundation, and optional local trace artifacts.

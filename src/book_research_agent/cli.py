@@ -63,6 +63,14 @@ from book_research_agent.core.retrieval import (
     retrieve_reranked_results,
     search_index,
 )
+from book_research_agent.core.tracing import (
+    build_default_trace_path,
+    run_answer_with_trace,
+    run_canon_with_trace,
+    run_compare_with_trace,
+    run_contradict_with_trace,
+    write_trace_json,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -211,6 +219,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_ANSWER_TOP_K,
         help="Maximum number of grounded source references to use.",
     )
+    _add_trace_arguments(answer_parser)
     answer_parser.set_defaults(handler=run_answer)
 
     compare_parser = subparsers.add_parser(
@@ -231,6 +240,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_COMPARE_TOP_K,
         help="Maximum number of source references to use per side.",
     )
+    _add_trace_arguments(compare_parser)
     compare_parser.set_defaults(handler=run_compare)
 
     contradict_parser = subparsers.add_parser(
@@ -251,6 +261,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_CONTRADICT_TOP_K,
         help="Maximum number of source references to use per side.",
     )
+    _add_trace_arguments(contradict_parser)
     contradict_parser.set_defaults(handler=run_contradict)
 
     canon_parser = subparsers.add_parser(
@@ -270,6 +281,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=DEFAULT_CANON_TOP_K,
         help="Maximum number of grounded source references to use.",
     )
+    _add_trace_arguments(canon_parser)
     canon_parser.set_defaults(handler=run_canon)
 
     eval_parser = subparsers.add_parser(
@@ -518,6 +530,41 @@ def _print_env_var_status(label: str, env_var_name: str) -> None:
     print(f"{label}_source: {status.source}")
 
 
+def _add_trace_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--save-trace",
+        action="store_true",
+        help="Save a local JSON trace artifact for this run.",
+    )
+    parser.add_argument(
+        "--trace-out",
+        type=Path,
+        default=None,
+        help="Explicit JSON output path for a trace artifact.",
+    )
+
+
+def _resolve_trace_output_path(
+    args: argparse.Namespace,
+    settings: object,
+    *,
+    mode: str,
+) -> Path | None:
+    trace_out = getattr(args, "trace_out", None)
+    if trace_out is not None:
+        return trace_out
+    if getattr(args, "save_trace", False):
+        return build_default_trace_path(settings.data_dir / "traces", mode=mode)
+    return None
+
+
+def _write_trace_if_requested(trace_output_path: Path | None, *, trace: object) -> None:
+    if trace_output_path is None or trace is None:
+        return
+    write_trace_json(trace_output_path, trace=trace)
+    print(f"saved_trace: {trace_output_path}")
+
+
 def run_ingest(args: argparse.Namespace) -> int:
     settings = load_settings()
     input_dir = args.input_dir or settings.data_raw_dir
@@ -654,17 +701,28 @@ def run_source(args: argparse.Namespace) -> int:
 def run_answer(args: argparse.Namespace) -> int:
     settings = load_settings()
     index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+    trace_output_path = _resolve_trace_output_path(args, settings, mode="answer")
 
     indexed_chunks = read_indexed_chunks_jsonl(index_file)
     embedding_provider = create_embedding_provider(settings)
     generation_provider = create_generation_provider(settings)
-    result = answer_query(
-        query=args.query,
-        indexed_chunks=indexed_chunks,
-        embedding_provider=embedding_provider,
-        generation_provider=generation_provider,
-        top_k=args.top_k,
-    )
+    if trace_output_path is None:
+        result = answer_query(
+            query=args.query,
+            indexed_chunks=indexed_chunks,
+            embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
+            top_k=args.top_k,
+        )
+        trace = None
+    else:
+        result, trace = run_answer_with_trace(
+            query=args.query,
+            indexed_chunks=indexed_chunks,
+            embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
+            top_k=args.top_k,
+        )
 
     print("book-research-agent answer")
     print(f"query: {result.query}")
@@ -680,24 +738,37 @@ def run_answer(args: argparse.Namespace) -> int:
         print(f"path: {source.relative_path}")
         print(f"chunk_index: {source.chunk_index}")
 
+    _write_trace_if_requested(trace_output_path, trace=trace)
     return 0
 
 
 def run_compare(args: argparse.Namespace) -> int:
     settings = load_settings()
     index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+    trace_output_path = _resolve_trace_output_path(args, settings, mode="compare")
 
     indexed_chunks = read_indexed_chunks_jsonl(index_file)
     embedding_provider = create_embedding_provider(settings)
     generation_provider = create_generation_provider(settings)
-    result = compare_queries(
-        left_query=args.left_query,
-        right_query=args.right_query,
-        indexed_chunks=indexed_chunks,
-        embedding_provider=embedding_provider,
-        generation_provider=generation_provider,
-        top_k=args.top_k,
-    )
+    if trace_output_path is None:
+        result = compare_queries(
+            left_query=args.left_query,
+            right_query=args.right_query,
+            indexed_chunks=indexed_chunks,
+            embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
+            top_k=args.top_k,
+        )
+        trace = None
+    else:
+        result, trace = run_compare_with_trace(
+            left_query=args.left_query,
+            right_query=args.right_query,
+            indexed_chunks=indexed_chunks,
+            embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
+            top_k=args.top_k,
+        )
 
     print("book-research-agent compare")
     print(f"left_query: {result.left_query}")
@@ -722,24 +793,37 @@ def run_compare(args: argparse.Namespace) -> int:
         print(f"path: {source.relative_path}")
         print(f"chunk_index: {source.chunk_index}")
 
+    _write_trace_if_requested(trace_output_path, trace=trace)
     return 0
 
 
 def run_contradict(args: argparse.Namespace) -> int:
     settings = load_settings()
     index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+    trace_output_path = _resolve_trace_output_path(args, settings, mode="contradict")
 
     indexed_chunks = read_indexed_chunks_jsonl(index_file)
     embedding_provider = create_embedding_provider(settings)
     generation_provider = create_generation_provider(settings)
-    result = contradict_queries(
-        left_query=args.left_query,
-        right_query=args.right_query,
-        indexed_chunks=indexed_chunks,
-        embedding_provider=embedding_provider,
-        generation_provider=generation_provider,
-        top_k=args.top_k,
-    )
+    if trace_output_path is None:
+        result = contradict_queries(
+            left_query=args.left_query,
+            right_query=args.right_query,
+            indexed_chunks=indexed_chunks,
+            embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
+            top_k=args.top_k,
+        )
+        trace = None
+    else:
+        result, trace = run_contradict_with_trace(
+            left_query=args.left_query,
+            right_query=args.right_query,
+            indexed_chunks=indexed_chunks,
+            embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
+            top_k=args.top_k,
+        )
 
     print("book-research-agent contradict")
     print(f"left_query: {result.left_query}")
@@ -764,23 +848,35 @@ def run_contradict(args: argparse.Namespace) -> int:
         print(f"path: {source.relative_path}")
         print(f"chunk_index: {source.chunk_index}")
 
+    _write_trace_if_requested(trace_output_path, trace=trace)
     return 0
 
 
 def run_canon(args: argparse.Namespace) -> int:
     settings = load_settings()
     index_file = args.index_file or (settings.data_index_dir / "chunk_index.jsonl")
+    trace_output_path = _resolve_trace_output_path(args, settings, mode="canon")
 
     indexed_chunks = read_indexed_chunks_jsonl(index_file)
     embedding_provider = create_embedding_provider(settings)
     generation_provider = create_generation_provider(settings)
-    result = canon_query(
-        query=args.query,
-        indexed_chunks=indexed_chunks,
-        embedding_provider=embedding_provider,
-        generation_provider=generation_provider,
-        top_k=args.top_k,
-    )
+    if trace_output_path is None:
+        result = canon_query(
+            query=args.query,
+            indexed_chunks=indexed_chunks,
+            embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
+            top_k=args.top_k,
+        )
+        trace = None
+    else:
+        result, trace = run_canon_with_trace(
+            query=args.query,
+            indexed_chunks=indexed_chunks,
+            embedding_provider=embedding_provider,
+            generation_provider=generation_provider,
+            top_k=args.top_k,
+        )
 
     print("book-research-agent canon")
     print(f"query: {result.query}")
@@ -796,6 +892,7 @@ def run_canon(args: argparse.Namespace) -> int:
         print(f"path: {source.relative_path}")
         print(f"chunk_index: {source.chunk_index}")
 
+    _write_trace_if_requested(trace_output_path, trace=trace)
     return 0
 
 

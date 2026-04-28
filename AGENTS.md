@@ -49,7 +49,7 @@ raw files
 -> documents.jsonl
 -> chunk
 -> chunks.jsonl
--> embed
+-> index
 -> chunk_index.jsonl
 -> search
 
@@ -69,7 +69,6 @@ Unless the active layer document explicitly requires it, do NOT add:
 - PDF parsing
 - DOCX parsing
 - vector database
-- reranking model
 - multi-agent orchestration
 - MCP
 - function calling

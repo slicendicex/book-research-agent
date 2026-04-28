@@ -12,6 +12,8 @@ data/index/*
 !data/index/.gitkeep
 data/eval/runs/*
 !data/eval/runs/.gitkeep
+data/traces/*
+!data/traces/.gitkeep
 .omx/
 .tmp/
 tmux-server-*.log
