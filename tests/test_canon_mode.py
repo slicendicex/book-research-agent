@@ -112,6 +112,14 @@ class CanonModeTests(unittest.TestCase):
         self.assertIn("Treat retrieved sources as the primary evidence.", prompt)
         self.assertIn("Prefer 'unclear' over overclaiming canon", prompt)
         self.assertIn("Do not convert interpretation into canon", prompt)
+        self.assertIn(
+            "Write the substantive content in the same language as the user's query.",
+            prompt,
+        )
+        self.assertIn(
+            "Keep the section labels exactly as written in the response shape below.",
+            prompt,
+        )
         self.assertIn("current_canonical_reading:", prompt)
         self.assertIn("competing_variants:", prompt)
         self.assertIn("confidence:", prompt)

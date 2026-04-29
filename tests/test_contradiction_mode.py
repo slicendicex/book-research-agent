@@ -122,6 +122,14 @@ class ContradictionModeTests(unittest.TestCase):
         self.assertIn("aligned, in tension, contradictory, or unclear", prompt)
         self.assertIn("prefer 'in tension' or 'unclear'", prompt)
         self.assertIn("weak evidence as unclear rather than contradiction", prompt)
+        self.assertIn(
+            "Write the substantive content in the same language as the user's queries.",
+            prompt,
+        )
+        self.assertIn(
+            "Keep the section labels exactly as written in the response shape below.",
+            prompt,
+        )
         self.assertIn("verdict: <aligned|in tension|contradictory|unclear>", prompt)
         self.assertIn("Left claim/query: auditor as protector", prompt)
         self.assertIn("Right claim/query: auditor as destroyer", prompt)

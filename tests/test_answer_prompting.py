@@ -54,6 +54,14 @@ class AnswerPromptingTests(unittest.TestCase):
         self.assertIn("Question: What does the auditor represent?", prompt)
         self.assertIn("using only the provided sources", prompt)
         self.assertIn("Prefer specific source-backed details", prompt)
+        self.assertIn(
+            "Write the substantive content in the same language as the user's query.",
+            prompt,
+        )
+        self.assertIn(
+            "Keep the section labels exactly as written in the response shape below.",
+            prompt,
+        )
         self.assertIn("support: <specific source-backed detail>", prompt)
         self.assertIn("limits: <uncertainty or missing evidence, or none>", prompt)
         self.assertIn("title: Auditor Notes", prompt)
@@ -81,6 +89,10 @@ class AnswerPromptingTests(unittest.TestCase):
 
         self.assertIn("using only the provided sources", prompt)
         self.assertIn("Do not invent facts, citations, or canon.", prompt)
+        self.assertIn(
+            "Write the substantive content in the same language as the user's query.",
+            prompt,
+        )
         self.assertIn("Domain guidance:", prompt)
         self.assertIn("book-project-canon", prompt)
         self.assertIn("Auditor", prompt)

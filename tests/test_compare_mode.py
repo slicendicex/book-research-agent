@@ -118,6 +118,14 @@ class CompareModeTests(unittest.TestCase):
         self.assertIn("using only the provided sources", prompt)
         self.assertIn("shared themes, key differences, main tension", prompt)
         self.assertIn("concrete source-backed similarities and differences", prompt)
+        self.assertIn(
+            "Write the substantive content in the same language as the user's queries.",
+            prompt,
+        )
+        self.assertIn(
+            "Keep the section labels exactly as written in the response shape below.",
+            prompt,
+        )
         self.assertIn("shared_ground, key_differences, tension, limits", prompt)
         self.assertIn("Left query: auditor", prompt)
         self.assertIn("Right query: old man", prompt)
