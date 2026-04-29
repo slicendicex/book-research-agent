@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 
 from openai import OpenAI
 
+from .budgets import get_generation_output_budget
+
 
 @dataclass
 class OpenAIGenerationProvider:
@@ -18,11 +20,11 @@ class OpenAIGenerationProvider:
             raise ValueError("OPENAI_API_KEY is required for the 'openai' generation provider")
         self._client = OpenAI(api_key=api_key)
 
-    def generate_text(self, prompt: str) -> str:
+    def generate_text(self, prompt: str, *, output_budget: int | None = None) -> str:
         response = self._client.responses.create(
             model=self.model_name,
             input=prompt,
-            max_output_tokens=220,
+            max_output_tokens=output_budget or get_generation_output_budget("answer"),
             temperature=0.2,
         )
         return _extract_text_response(response)

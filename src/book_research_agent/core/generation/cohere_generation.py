@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 
 import cohere
 
+from .budgets import get_generation_output_budget
+
 
 @dataclass
 class CohereGenerationProvider:
@@ -18,7 +20,7 @@ class CohereGenerationProvider:
             raise ValueError("COHERE_API_KEY is required for the 'cohere' generation provider")
         self._client = cohere.ClientV2(api_key=api_key)
 
-    def generate_text(self, prompt: str) -> str:
+    def generate_text(self, prompt: str, *, output_budget: int | None = None) -> str:
         response = self._client.chat(
             model=self.model_name,
             messages=[
@@ -27,7 +29,7 @@ class CohereGenerationProvider:
                     "content": prompt,
                 }
             ],
-            max_tokens=220,
+            max_tokens=output_budget or get_generation_output_budget("answer"),
             temperature=0.2,
         )
         return _extract_text_response(response)

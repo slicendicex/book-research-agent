@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from book_research_agent.core.answering.defaults import DEFAULT_COMPARE_TOP_K
+from book_research_agent.core.generation.budgets import get_generation_output_budget
 from book_research_agent.core.answering.models import CompareResult, SourceReference
 from book_research_agent.core.answering.prompting import build_grounded_compare_prompt
 from book_research_agent.core.indexing.models import IndexedChunk
@@ -52,7 +53,10 @@ def compare_queries(
         right_results=right_results,
         domain_pack=DEFAULT_DOMAIN_PACK,
     )
-    comparison = generation_provider.generate_text(prompt).strip()
+    comparison = generation_provider.generate_text(
+        prompt,
+        output_budget=get_generation_output_budget("compare"),
+    ).strip()
     if not comparison:
         raise ValueError("generation provider returned an empty comparison")
 

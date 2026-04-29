@@ -13,6 +13,7 @@ from book_research_agent.core.answering.defaults import (
     DEFAULT_COMPARE_TOP_K,
     DEFAULT_CONTRADICT_TOP_K,
 )
+from book_research_agent.core.generation.budgets import get_generation_output_budget
 from book_research_agent.core.answering.prompting import (
     build_grounded_answer_prompt,
     build_grounded_canon_prompt,
@@ -65,7 +66,10 @@ def run_answer_with_trace(
             search_results=search_results,
             domain_pack=DEFAULT_DOMAIN_PACK,
         )
-        answer = generation_provider.generate_text(prompt).strip()
+        answer = generation_provider.generate_text(
+            prompt,
+            output_budget=get_generation_output_budget("answer"),
+        ).strip()
         if not answer:
             raise ValueError("generation provider returned an empty answer")
         result = AnswerResult(
@@ -121,7 +125,10 @@ def run_canon_with_trace(
             search_results=search_results,
             domain_pack=DEFAULT_DOMAIN_PACK,
         )
-        judgment = generation_provider.generate_text(prompt).strip()
+        judgment = generation_provider.generate_text(
+            prompt,
+            output_budget=get_generation_output_budget("canon"),
+        ).strip()
         if not judgment:
             raise ValueError("generation provider returned an empty canon judgment")
         result = CanonResult(
@@ -187,7 +194,10 @@ def run_compare_with_trace(
             right_results=right_results,
             domain_pack=DEFAULT_DOMAIN_PACK,
         )
-        comparison = generation_provider.generate_text(prompt).strip()
+        comparison = generation_provider.generate_text(
+            prompt,
+            output_budget=get_generation_output_budget("compare"),
+        ).strip()
         if not comparison:
             raise ValueError("generation provider returned an empty comparison")
         result = CompareResult(
@@ -258,7 +268,10 @@ def run_contradict_with_trace(
             right_results=right_results,
             domain_pack=DEFAULT_DOMAIN_PACK,
         )
-        judgment = generation_provider.generate_text(prompt).strip()
+        judgment = generation_provider.generate_text(
+            prompt,
+            output_budget=get_generation_output_budget("contradict"),
+        ).strip()
         if not judgment:
             raise ValueError("generation provider returned an empty contradiction judgment")
         result = ContradictionResult(

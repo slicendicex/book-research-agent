@@ -5,6 +5,7 @@ from book_research_agent.core.answering.compare import (
     _source_references,
 )
 from book_research_agent.core.answering.defaults import DEFAULT_CONTRADICT_TOP_K
+from book_research_agent.core.generation.budgets import get_generation_output_budget
 from book_research_agent.core.answering.models import ContradictionResult
 from book_research_agent.core.answering.prompting import (
     build_grounded_contradiction_prompt,
@@ -57,7 +58,10 @@ def contradict_queries(
         right_results=right_results,
         domain_pack=DEFAULT_DOMAIN_PACK,
     )
-    judgment = generation_provider.generate_text(prompt).strip()
+    judgment = generation_provider.generate_text(
+        prompt,
+        output_budget=get_generation_output_budget("contradict"),
+    ).strip()
     if not judgment:
         raise ValueError("generation provider returned an empty contradiction judgment")
 

@@ -50,7 +50,7 @@ class StubGenerationProvider:
     provider_name = "stub-generation"
     model_name = "stub-generation-model"
 
-    def generate_text(self, prompt: str) -> str:
+    def generate_text(self, prompt: str, *, output_budget: int | None = None) -> str:
         return "grounded stub answer"
 
 

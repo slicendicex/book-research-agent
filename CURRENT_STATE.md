@@ -34,6 +34,7 @@ Current retrieval stack is functional:
 - grounded compare mode
 - grounded contradiction/tension mode
 - grounded canon judgment mode
+- centralized mode-aware generation output budgets
 - mode-aware answer-facing source depth defaults
 - retrieval-observability eval snapshots, auto-saved run history, and CLI diffing
 - optional local trace artifacts for answer-facing modes
@@ -69,6 +70,7 @@ Current retrieval stack is functional:
 - Layer 20 — Prompt-Based Reranking Foundation
 - Layer 21 — Eval Run History and Diff Foundation
 - Layer 22 — RAG Trace Artifact Foundation
+- Layer 23 — Mode-Aware Generation Output Budgets
 
 ---
 
@@ -143,6 +145,12 @@ Generation:
 - model: `gpt-4.1-mini`
 - answer mode: retrieval-grounded single-shot generation
 - reranking: prompt-based candidate id selection through the existing generation path
+- output budgets:
+  - reranking: `256`
+  - answer: `900`
+  - canon: `900`
+  - contradict: `900`
+  - compare: `1400`
 
 ---
 
@@ -155,6 +163,7 @@ Generation:
 - eval run retention prunes only auto-saved timestamped files
 - prompt-based reranking falls back to semantic order when model output is unusable
 - trace artifacts are opt-in and store compact evidence blocks rather than full documents
+- compare output still depends on model behavior even with a larger mode-specific budget
 - domain awareness is currently a compact prompt lens, not a reasoning layer
 - no MCP / function-calling layer yet
 
@@ -162,10 +171,10 @@ Generation:
 
 ## Next target layer
 
-Layer 23 — Later expansion
+Layer 24 — Later expansion
 
 Goal:
-keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, retrieval-observability evals with saved run history/diffing, optional local trace artifacts, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, upgraded chunking/retrieval, and prompt-based reranking narrow and traceable.
+keep later work beyond improved retrieval-grounded answering, compare/contradiction/canon modes, centralized mode-aware generation output budgets, retrieval-observability evals with saved run history/diffing, optional local trace artifacts, curated morphology-aware corpus coverage, diagnostics, corpus hygiene, upgraded chunking/retrieval, and prompt-based reranking narrow and traceable.
 
 Focus:
 - future provider expansion

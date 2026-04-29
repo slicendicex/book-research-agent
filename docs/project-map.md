@@ -6,7 +6,7 @@ book-research-agent
 
 ## Current status
 
-Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, paragraph-aware chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a retrieval-observability eval upgrade with run history/diff support, a read-only morphology-aware concept-level corpus coverage report with project concept curation, prompt-based reranking for evidence-consuming modes, and optional local trace artifacts for answer-facing runs.
+Initial repository scaffold created, with local Python environment, runnable CLI scaffold, automatic local `.env` loading, AI boundary/config foundation, document ingestion, paragraph-aware chunking, OpenAI embedding/index foundation, source-facing retrieval, retrieval-grounded answer assembly, read-only corpus diagnostics, compact canon-aware answer guidance, grounded compare mode, contradiction/tension mode, read-only duplicate detection, a narrow canon judgment mode, improved grounding prompts with mode-aware retrieval depth defaults, a retrieval-observability eval upgrade with run history/diff support, a read-only morphology-aware concept-level corpus coverage report with project concept curation, prompt-based reranking for evidence-consuming modes, optional local trace artifacts for answer-facing runs, and mode-aware generation output budgets.
 
 ## Current structure
 
@@ -41,6 +41,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - `docs/layers/20-prompt-based-reranking-foundation.md`
 - `docs/layers/21-eval-run-history-and-diff-foundation.md`
 - `docs/layers/22-rag-trace-artifact-foundation.md`
+- `docs/layers/23-mode-aware-generation-output-budgets.md`
 - `requirements.txt`
 - `src/book_research_agent/core/`
 - `src/book_research_agent/core/chunks/`
@@ -96,6 +97,7 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 - Local file-based chunk index in `data/index/chunk_index.jsonl`
 - Plain cosine-similarity semantic search over indexed chunks with lightweight diversity filtering
 - Prompt-based reranking of larger semantic candidate sets for source, answer, compare, contradict, canon, and eval evidence snapshots
+- Centralized mode-aware generation output budgets for reranking, answer, canon, contradict, and compare
 - Source-facing retrieval formatting with readable excerpts
 - Light same-document neighbor suppression for source-mode output
 - Dedicated `source` CLI command for source-first retrieval display
@@ -121,4 +123,4 @@ Initial repository scaffold created, with local Python environment, runnable CLI
 
 ## Next logical layer
 
-Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, retrieval-observability evals with saved run history/diffing, curated morphology-aware concept-level corpus coverage, upgraded chunking/retrieval foundation, prompt-based reranking foundation, and optional local trace artifacts.
+Broader reasoning and provider expansion built on top of the canon-aware answer, compare, contradiction, canon, diagnostics, corpus hygiene, retrieval-observability evals with saved run history/diffing, curated morphology-aware concept-level corpus coverage, upgraded chunking/retrieval foundation, prompt-based reranking foundation, optional local trace artifacts, and mode-aware generation output budgets.

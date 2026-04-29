@@ -5,6 +5,7 @@ from book_research_agent.core.answering.compare import (
     _source_references,
 )
 from book_research_agent.core.answering.defaults import DEFAULT_CANON_TOP_K
+from book_research_agent.core.generation.budgets import get_generation_output_budget
 from book_research_agent.core.answering.models import CanonResult
 from book_research_agent.core.answering.prompting import build_grounded_canon_prompt
 from book_research_agent.core.indexing.models import IndexedChunk
@@ -47,7 +48,10 @@ def canon_query(
         search_results=search_results,
         domain_pack=DEFAULT_DOMAIN_PACK,
     )
-    judgment = generation_provider.generate_text(prompt).strip()
+    judgment = generation_provider.generate_text(
+        prompt,
+        output_budget=get_generation_output_budget("canon"),
+    ).strip()
     if not judgment:
         raise ValueError("generation provider returned an empty canon judgment")
 

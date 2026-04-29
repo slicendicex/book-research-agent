@@ -42,7 +42,15 @@ class GenerationProviderTests(unittest.TestCase):
                     model_name="command-a-03-2025",
                 )
 
-        self.assertEqual(provider.generate_text("prompt text"), "Grounded answer.")
+        self.assertEqual(
+            provider.generate_text("prompt text", output_budget=1400),
+            "Grounded answer.",
+        )
+        client_cls.return_value.chat.assert_called_once()
+        self.assertEqual(
+            client_cls.return_value.chat.call_args.kwargs["max_tokens"],
+            1400,
+        )
 
     def test_openai_generation_provider_raises_when_api_key_missing(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
@@ -68,7 +76,15 @@ class GenerationProviderTests(unittest.TestCase):
                     model_name="gpt-4.1-mini",
                 )
 
-        self.assertEqual(provider.generate_text("prompt text"), "Grounded OpenAI answer.")
+        self.assertEqual(
+            provider.generate_text("prompt text", output_budget=900),
+            "Grounded OpenAI answer.",
+        )
+        client_cls.return_value.responses.create.assert_called_once()
+        self.assertEqual(
+            client_cls.return_value.responses.create.call_args.kwargs["max_output_tokens"],
+            900,
+        )
 
     def test_provider_factory_returns_openai_generation_provider(self) -> None:
         settings = RuntimeSettings(

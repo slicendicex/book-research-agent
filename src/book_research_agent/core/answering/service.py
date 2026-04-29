@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from book_research_agent.core.answering.defaults import DEFAULT_ANSWER_TOP_K
+from book_research_agent.core.generation.budgets import get_generation_output_budget
 from book_research_agent.core.answering.models import AnswerResult, SourceReference
 from book_research_agent.core.answering.prompting import build_grounded_answer_prompt
 from book_research_agent.core.indexing.models import IndexedChunk
@@ -40,7 +41,10 @@ def answer_query(
         search_results=search_results,
         domain_pack=DEFAULT_DOMAIN_PACK,
     )
-    answer = generation_provider.generate_text(prompt).strip()
+    answer = generation_provider.generate_text(
+        prompt,
+        output_budget=get_generation_output_budget("answer"),
+    ).strip()
     if not answer:
         raise ValueError("generation provider returned an empty answer")
 

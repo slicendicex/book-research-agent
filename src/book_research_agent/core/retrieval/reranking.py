@@ -4,6 +4,7 @@ import json
 import re
 from dataclasses import dataclass
 
+from book_research_agent.core.generation.budgets import get_generation_output_budget
 from book_research_agent.core.indexing.models import IndexedChunk
 from book_research_agent.core.providers.base import EmbeddingProvider, GenerationProvider
 
@@ -83,6 +84,7 @@ def rerank_search_results(
     try:
         raw_response = generation_provider.generate_text(
             build_reranking_prompt(query=query, candidates=candidates),
+            output_budget=get_generation_output_budget("reranking"),
         )
     except Exception:
         return candidates[:top_k]

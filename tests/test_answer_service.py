@@ -28,7 +28,7 @@ class StubGenerationProvider:
     def __init__(self) -> None:
         self.prompts: list[str] = []
 
-    def generate_text(self, prompt: str) -> str:
+    def generate_text(self, prompt: str, *, output_budget: int | None = None) -> str:
         self.prompts.append(prompt)
         if prompt.startswith("You select existing evidence chunks"):
             return '["R1"]'

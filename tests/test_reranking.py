@@ -21,7 +21,7 @@ class StubGenerationProvider:
         self.fail = fail
         self.prompts: list[str] = []
 
-    def generate_text(self, prompt: str) -> str:
+    def generate_text(self, prompt: str, *, output_budget: int | None = None) -> str:
         self.prompts.append(prompt)
         if self.fail:
             raise RuntimeError("rerank failure")
